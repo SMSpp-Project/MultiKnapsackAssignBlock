@@ -11,7 +11,7 @@ These instructions will let you build MultiKnapsackAssignBlock on your system.
 
 - The [SMS++ core library](https://gitlab.com/smspp/smspp) and its
   requirements.
-
+- [BinaryKnapsackBlock](https://gitlab.com/smspp/binaryknapsackblock).
 
 ### Build and install with CMake
 
