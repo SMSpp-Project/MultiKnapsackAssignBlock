@@ -401,6 +401,10 @@ void MultiKnapsackAssignBlock::guts_of_destructor(){
 
  AR = 0;
 
+ for( auto & s : v_Sk )
+  s.clear();
+ v_Sk.clear();	
+
 }
 
 /*--------------------------------------------------------------------------*/
