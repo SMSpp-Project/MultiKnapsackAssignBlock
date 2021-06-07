@@ -27,7 +27,7 @@ clean::
 
 $(MKABkSDR)MultiKnapsackAssignBlock.o: $(MKABkSDR)MultiKnapsackAssignBlock.cpp \
 	$(MKABkSDR)MultiKnapsackAssignBlock.h $(SMS++OBJ)
-	$(CC) -c $*.cpp -o $@ \
+	$(CC) -c $(MKABkSDR)MultiKnapsackAssignBlock.cpp -o $@ \
 	$(MKABkINC) $(SMS++INC) $(SW)
 
 ########################## End of makefile ###################################

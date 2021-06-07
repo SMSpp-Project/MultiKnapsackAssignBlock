@@ -33,6 +33,7 @@ include $(MKABkSDR)/makefile
 # append external -I directives to BKBkINC, BKBkOBJ and BKBkH as defined
 # by the makefile, thus the := assignment has to be used (use GNU make)
 MKABkOBJ := $(MKABkOBJ) $(SMS++OBJ) $(BKBkOBJ)
+MKABkH := $(MKABkH) $(BKBkH) $(SMS++H)
 MKABkINC := $(MKABkINC) $(SMS++INC) $(BKBkINC)
 
 # external libreries for MKABlock
