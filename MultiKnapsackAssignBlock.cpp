@@ -245,6 +245,47 @@ void MultiKnapsackAssignBlock::generate_abstract_constraints(
 /*--------------------- Methods for checking the Block ---------------------*/
 /*--------------------------------------------------------------------------*/
 
+/*--------------------------------------------------------------------------*/
+/*----------------------- Methods for handling Solution --------------------*/
+/*--------------------------------------------------------------------------*/
+
+bool MultiKnapsackAssignBlock::get_x( Index i , Index j ){
+
+ if( j >= f_N )
+  throw( std::invalid_argument( "invalid item" ) );
+
+ if( i >= f_M )
+  throw( std::invalid_argument( "invalid knapsack" ) );
+
+ Index k = v_K[ j ];   // get the class of item j
+
+ auto bkb = static_cast< BinaryKnapsackBlock * >( v_Block[ i * f_R + k ] );
+ 
+ Index s = 0;                         // index of the variable in the
+ while( v_Sk[ k ][ s ] != j )         // sub-Block 
+  s++;
+
+ return bkb->get_x( s + 1 );
+
+}
+
+/*--------------------------------------------------------------------------*/
+
+bool MultiKnapsackAssignBlock::get_y( Index i , Index k ){
+
+ if( k >= f_R )
+  throw( std::invalid_argument( "invalid class" ) );
+
+ if( i >= f_M )
+  throw( std::invalid_argument( "invalid knapsack" ) );
+
+ auto bkb = static_cast< BinaryKnapsackBlock * >( v_Block[ i * f_R + k ] );
+
+ return bkb->get_x( 0 );
+
+}
+
+
 
 /*--------------------------------------------------------------------------*/
 /*--- METHODS FOR LOADING, PRINTING & SAVING THE MultiKnapsackAssignBlock --*/
@@ -403,7 +444,7 @@ void MultiKnapsackAssignBlock::guts_of_destructor(){
 
  for( auto & s : v_Sk )
   s.clear();
- v_Sk.clear();	
+ v_Sk.clear(); 
 
 }
 

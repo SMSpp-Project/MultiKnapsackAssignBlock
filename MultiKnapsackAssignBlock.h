@@ -303,6 +303,16 @@ Index get_Class( Index i ){
 /** @name Methods for handling Solution
  *  @{ */
 
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+ /// given the knapsack i and the item j gets the solution
+
+bool get_x( Index i , Index j );
+
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+ /// given the knapsack m and the class k gets the solution
+
+bool get_y( Index i , Index k );
+
 
 /**@} ----------------------------------------------------------------------*/
 /*-------------------- Methods for handling Modification -------------------*/
