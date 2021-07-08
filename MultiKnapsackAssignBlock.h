@@ -309,7 +309,7 @@ Index get_Class( Index i ){
 bool get_x( Index i , Index j );
 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
- /// given the knapsack m and the class k gets the solution
+ /// given the knapsack i and the class k gets the solution
 
 bool get_y( Index i , Index k );
 
