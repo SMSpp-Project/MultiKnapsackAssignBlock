@@ -321,10 +321,11 @@ void MultiKnapsackAssignBlock::serialize( netCDF::NcGroup & group ) const {
 
 
 /*--------------------------------------------------------------------------*/
-/*-------------------------- PROTECTED METHODS -----------------------------*/
+/*------------ METHODS FOR LOADING, PRINTING & SAVING THE Block ------------*/
 /*--------------------------------------------------------------------------*/
 
-void MultiKnapsackAssignBlock::print( std::ostream & output ) const {
+void MultiKnapsackAssignBlock::print( std::ostream & output , 
+                                      char vlvl ) const {
 
  output << "MultiKnapsackAssignBlock" << std::endl;
 
@@ -352,7 +353,7 @@ void MultiKnapsackAssignBlock::print( std::ostream & output ) const {
 
 /*--------------------------------------------------------------------------*/
 
-void MultiKnapsackAssignBlock::load( std::istream & input ){
+void MultiKnapsackAssignBlock::load( std::istream & input , char frmt ){
 
  if( f_N )              // erase previous instance, if any
   guts_of_destructor(); 
@@ -413,6 +414,10 @@ void MultiKnapsackAssignBlock::load( std::istream & input ){
   add_Modification( std::make_shared< NBModification >( this ) ); 
 
 }
+
+/*--------------------------------------------------------------------------*/
+/*-------------------------- PROTECTED METHODS -----------------------------*/
+/*--------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------*/
 /*-------------------------- PRIVATE METHODS -------------------------------*/

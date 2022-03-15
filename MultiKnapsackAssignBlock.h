@@ -340,6 +340,25 @@ void serialize( netCDF::NcGroup & group ) const override;
 /** @name Changing the data of the Multiple Knapsack Assignment instance */
 
 
+/** @} ---------------------------------------------------------------------*/
+/*------------ METHODS FOR LOADING, PRINTING & SAVING THE Block ------------*/
+/*--------------------------------------------------------------------------*/
+/** @name Methods for loading, printing & saving the Block */
+
+ /// print the MultiKnapsackAssignBlock on an ostream
+ /** Protected method to print information about the 
+ * MultiKnapsackAssignBlock */ 
+
+ void print( std::ostream & output , char vlvl = 0 ) const override;
+
+/*--------------------------------------------------------------------------*/
+ /// load instance from txt file  
+/** Protected method for loading a MultiKnapsackAssignBlock out of 
+ * std::istream */      
+
+ void load( std::istream & input , char frmt = 0 ) override;
+
+
 /**@} ----------------------------------------------------------------------*/
 /*-------------------- PROTECTED PART OF THE CLASS -------------------------*/
 /*--------------------------------------------------------------------------*/
@@ -351,19 +370,6 @@ protected:
 /*--------------------------------------------------------------------------*/
 /** @name Protected methods for inserting and extracting
  *  @{ */
-
- /// print the MultiKnapsackAssignBlock on an ostream
- /** Protected method to print information about the 
- * MultiKnapsackAssignBlock */ 
-
-void print( std::ostream & output ) const override;
-
-/*--------------------------------------------------------------------------*/
- /// load instance from txt file  
-/** Protected method for loading a MultiKnapsackAssignBlock out of 
- * std::istream */      
-
-void load( std::istream & input ) override;
 
 /**@} ----------------------------------------------------------------------*/
 /*--------------------------- PROTECTED FIELDS  ----------------------------*/
