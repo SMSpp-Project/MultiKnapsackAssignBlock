@@ -1,30 +1,40 @@
 /*--------------------------------------------------------------------------*/
-/*-------------------- File MultiKnapsackAssignBlock.cpp -------------------*/
+/*------------------- File MultiKnapsackAssignBlock.cpp --------------------*/
+/*--------------------------------------------------------------------------*/
+/** @file
+ * Implementation of the MultiKnapsackAssignBlock class.
+ *
+ * \author Federica Di Pasquale \n
+ *         Dipartimento di Informatica \n
+ *         Universita' di Pisa \n
+ *
+ * \author Antonio Frangioni \n
+ *         Dipartimento di Informatica \n
+ *         Universita' di Pisa \n
+ *
+ * \copyright &copy; by Federica Di Pasquale, Antonio Frangioni
+ */
+/*--------------------------------------------------------------------------*/
+/*----------------------------- IMPLEMENTATION -----------------------------*/
+/*--------------------------------------------------------------------------*/
+/*------------------------------ INCLUDES ----------------------------------*/
 /*--------------------------------------------------------------------------*/
 
 #include "MultiKnapsackAssignBlock.h"
 
+#include "LinearFunction.h"
+
 /*--------------------------------------------------------------------------*/
-/*--------------------------- NAMESPACE AND USING --------------------------*/
+/*------------------------- NAMESPACE AND USING ----------------------------*/
 /*--------------------------------------------------------------------------*/
 
 using namespace SMSpp_di_unipi_it;
 
 /*--------------------------------------------------------------------------*/
-/*---------------------------------- TYPES ---------------------------------*/
-/*--------------------------------------------------------------------------*/
-
-
-/*--------------------------------------------------------------------------*/
-/*-------------------------------- FUNCTIONS -------------------------------*/
-/*--------------------------------------------------------------------------*/
-
-
-/*--------------------------------------------------------------------------*/
 /*----------------------------- STATIC MEMBERS -----------------------------*/
 /*--------------------------------------------------------------------------*/
 
-// register MultiKnapsackAssignBlock to the Block factory
+// register MultiKnapsackAssignBlock in the Block factory
 
 SMSpp_insert_in_factory_cpp_1( MultiKnapsackAssignBlock );
 
@@ -32,475 +42,322 @@ SMSpp_insert_in_factory_cpp_1( MultiKnapsackAssignBlock );
 /*----------------- METHODS OF MultiKnapsackAssignBlock --------------------*/
 /*--------------------------------------------------------------------------*/
 
-void MultiKnapsackAssignBlock::load( Index n , Index r , Index m , 
-                                     std::vector< double > && Capacities , 
-                                     std::vector< double > && Profits , 
-                                     std::vector< double > && Weights , 
-                                     Subset && Classes ){
-
- // sanity checks
+void MultiKnapsackAssignBlock::load( Index n , Index r , Index m ,
+				     std::vector< double > && Capacities ,
+				     std::vector< double > && Profits ,
+				     std::vector< double > && Weights ,
+				     Subset && Classes )
+{
+ static const std::string _prfx = "MultiKnapsackAssignBlock::load: ";
 
  if( Capacities.size() != m )
-  throw( std::invalid_argument( "Vector of Capacities of the wrong size!" ) );
- 
- if( Profits.size() != n )  
-  throw( std::invalid_argument( "Vector of Profits of the wrong size!" ) );
+  throw( std::invalid_argument( _prfx + "Capacities of the wrong size" ) );
+ if( Profits.size() != n )
+  throw( std::invalid_argument( _prfx + "Profits of the wrong size" ) );
+ if( Weights.size() != n )
+  throw( std::invalid_argument( _prfx + "Weights of the wrong size" ) );
+ if( Classes.size() != n )
+  throw( std::invalid_argument( _prfx + "Classes of the wrong size" ) );
 
- if( Weights.size() != n )  
-  throw( std::invalid_argument( "Vector of Weights of the wrong size!" ) );
+ guts_of_destructor();  // discard the previous instance, if any
 
- if( Classes.size() != n )  
-  throw( std::invalid_argument( "Vector of Classes of the wrong size!" ) );
-
- if( f_N )                      // clear previous instances (if any)
-  guts_of_destructor();
- 
  f_N = n;
  f_R = r;
  f_M = m;
-
  v_C = std::move( Capacities );
  v_P = std::move( Profits );
  v_W = std::move( Weights );
  v_K = std::move( Classes );
 
- v_Sk.resize( f_R );
-
- for( Index i = 0 ; i < f_N ; i++ ){
-  
-  Index k = v_K[ i ];       // class of the item i 
-
-  if( k >= f_R )
-   throw( std::invalid_argument( "Invalid class for item " + 
-                                 std::to_string( i ) ) );  
-
-  v_Sk[ k ].push_back( i );
- 
- }
-
- // create and load sub-Blocks (BinaryKnapsackBlock)
- create_SubBlocks();
-
- // Modification - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+ build( _prfx );
 
  if( anyone_there() )
-  add_Modification( std::make_shared< NBModification >( this ) ); 
+  add_Modification( std::make_shared< NBModification >( this ) );
 
-
-} // end( MultiKnapsackAssignBlock::load( memory ) )
+ }  // end( MultiKnapsackAssignBlock::load( memory ) )
 
 /*--------------------------------------------------------------------------*/
 
-void MultiKnapsackAssignBlock::deserialize( const netCDF::NcGroup & group ){
+void MultiKnapsackAssignBlock::load( std::istream & input , char frmt )
+{
+ static const std::string _prfx = "MultiKnapsackAssignBlock::load: ";
 
- if( f_N )                      // clear previous instances (if any)
-  guts_of_destructor();
+ guts_of_destructor();  // discard the previous instance, if any
 
- // read problem data
-
- // get dimensions: f_N, f_R and f_M - - - - - - - - - - - - - - - - - - - -
-
- netCDF::NcDim n = group.getDim( "NItems" );
- if( n.isNull() )
-  throw( std::logic_error( "NItems dimension is required" ) );
- f_N = n.getSize();
-
- netCDF::NcDim r = group.getDim( "NClasses" );
- if( r.isNull() )
-  throw( std::logic_error( "NClasses dimension is required" ) );
- f_R = r.getSize();
-
- netCDF::NcDim m = group.getDim( "NKnapsacks" );
- if( m.isNull() )
-  throw( std::logic_error( "NKnapsacks dimension is required" ) );
- f_M = m.getSize();
-
- // get capacities, weights, profits and classes - - - - - - - - - - - - - - 
-
- netCDF::NcVar c = group.getVar( "Capacities" );
- if( c.isNull() )
-  throw( std::logic_error( "Capacities are required" ) ); 
+ if( ! ( input >> eatcomments >> f_N ) )
+  throw( std::invalid_argument( _prfx + "error reading the number of items"
+				) );
+ if( ! ( input >> eatcomments >> f_R ) )
+  throw( std::invalid_argument( _prfx +
+				"error reading the number of classes" ) );
+ if( ! ( input >> eatcomments >> f_M ) )
+  throw( std::invalid_argument( _prfx +
+				"error reading the number of knapsacks" ) );
 
  v_C.resize( f_M );
- c.getVar( v_C.data() );
-
-
- netCDF::NcVar p = group.getVar( "Profits" );
- if( p.isNull() )
-  throw( std::logic_error( "Profits are required" ) ); 
+ for( auto & c : v_C )
+  if( ! ( input >> eatcomments >> c ) )
+   throw( std::invalid_argument( _prfx + "error reading the capacities" ) );
 
  v_P.resize( f_N );
- p.getVar( v_P.data() );
-
-
- netCDF::NcVar w = group.getVar( "Weights" );
- if( w.isNull() )
-  throw( std::logic_error( "Weights are required" ) ); 
-
  v_W.resize( f_N );
- w.getVar( v_W.data() );
-
-
- netCDF::NcVar k = group.getVar( "Classes" );
- if( k.isNull() )
-  throw( std::logic_error( "Classes are required" ) ); 
-
  v_K.resize( f_N );
- k.getVar( v_K.data() );
+ for( Index j = 0 ; j < f_N ; ++j ) {
+  Index item;  // the index of the item, which is ignored
+  if( ! ( input >> eatcomments >> item >> v_P[ j ] >> v_W[ j ] >> v_K[ j ] ) )
+   throw( std::invalid_argument( _prfx + "error reading item " +
+				 std::to_string( j ) ) );
+  }
 
- v_Sk.resize( f_R );
+ build( _prfx );
 
- for( Index i = 0 ; i < f_N ; i++ ){
-  
-  Index k = v_K[ i ];       // class of the item i 
+ if( anyone_there() )
+  add_Modification( std::make_shared< NBModification >( this ) );
 
-  if( k >= f_R )
-   throw( std::logic_error( "Invalid class for item " + 
-                            std::to_string( i ) ) );  
-
-  v_Sk[ k ].push_back( i );
- 
- }
-
- // create and load sub-Blocks (BinaryKnapsackBlock)
- create_SubBlocks();
-
- // call the method of Block
- // inside this the NBModification, the "nuclear option",  is issued
- Block::deserialize( group );
-
-} // end( MultiKnapsackAssignBlock::deserialize )
-
+ }  // end( MultiKnapsackAssignBlock::load( istream ) )
 
 /*--------------------------------------------------------------------------*/
 
-void MultiKnapsackAssignBlock::generate_abstract_constraints( 
-    Configuration * stcc ){
+void MultiKnapsackAssignBlock::deserialize( const netCDF::NcGroup & group )
+{
+ static const std::string _prfx = "MultiKnapsackAssignBlock::deserialize: ";
 
- if( AR & HasCns )   // nothing to do
-  return;
+ guts_of_destructor();  // discard the previous instance, if any
 
- // generate v_cnstY - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+ const auto get_dim = [ & ]( const char * name ) -> Index {
+  auto d = group.getDim( name );
+  if( d.isNull() )
+   throw( std::invalid_argument( _prfx + name + " dimension is required" ) );
+  return( d.getSize() );
+  };
 
- v_cnstY.resize( f_M );
+ f_N = get_dim( "NItems" );
+ f_R = get_dim( "NClasses" );
+ f_M = get_dim( "NKnapsacks" );
 
- for( Index m = 0 ; m < f_M ; m++ ){    // for each knapsack
-  
-  LinearFunction::v_coeff_pair y( f_R );
+ const auto get_var = [ & ]( const char * name , auto & v , Index size ) {
+  v.resize( size );
+  auto nv = group.getVar( name );
+  if( nv.isNull() )
+   throw( std::invalid_argument( _prfx + name + " are required" ) );
+  if( size )
+   nv.getVar( v.data() );
+  };
 
-  for( Index k = 0 ; k < f_R ; k++ ){   // for each class
-   auto bkb = static_cast< BinaryKnapsackBlock * >( v_Block[ m * f_R + k ] );
-   y[ k ].first = bkb->get_Var( 0 ); 
-   y[ k ].second = 1;
+ get_var( "Capacities" , v_C , f_M );
+ get_var( "Profits" , v_P , f_N );
+ get_var( "Weights" , v_W , f_N );
+ get_var( "Classes" , v_K , f_N );
+
+ build( _prfx );
+
+ Block::deserialize( group );  // this issues the NBModification
+
+ }  // end( MultiKnapsackAssignBlock::deserialize )
+
+/*--------------------------------------------------------------------------*/
+
+void MultiKnapsackAssignBlock::generate_abstract_variables(
+						      Configuration * stvv )
+{
+ if( AR & HasVar )  // the Variable are there already
+  return;           // nothing to do
+
+ Block::generate_abstract_variables( stvv );  // these of the sub-Block
+
+ AR |= HasVar;
+
+ }  // end( MultiKnapsackAssignBlock::generate_abstract_variables )
+
+/*--------------------------------------------------------------------------*/
+
+void MultiKnapsackAssignBlock::generate_abstract_constraints(
+						      Configuration * stcc )
+{
+ if( AR & HasCns )  // the Constraint are there already
+  return;           // nothing to do
+
+ // the linking Constraint use the Variable of the sub-Block
+ generate_abstract_variables();
+
+ // the class Constraint: sum_k y_{ik} <= 1 for each knapsack i - - - - - - -
+
+ v_class.resize( f_M );
+ for( Index i = 0 ; i < f_M ; ++i ) {
+  LinearFunction::v_coeff_pair coeffs( f_R );
+  for( Index k = 0 ; k < f_R ; ++k )
+   coeffs[ k ] = { get_knapsack( i , k )->get_Var( 0 ) , 1 };
+
+  v_class[ i ].set_lhs( - Inf< RowConstraint::RHSValue >() , eNoMod );
+  v_class[ i ].set_rhs( 1 , eNoMod );
+  v_class[ i ].set_function( new LinearFunction( std::move( coeffs ) ) ,
+			     eNoMod );
   }
 
-  v_cnstY[ m ].set_function( new LinearFunction( std::move( y ) , 0 ) );
-  v_cnstY[ m ].set_rhs( 1 );
-  v_cnstY[ m ].set_lhs( - Inf<double>() );
- 
-  add_static_constraint( v_cnstY[ m ] );
+ // the assignment Constraint: sum_i x_{ij} <= 1 for each item j - - - - - -
 
- }
+ v_assign.resize( f_N );
+ for( Index j = 0 ; j < f_N ; ++j ) {
+  LinearFunction::v_coeff_pair coeffs( f_M );
+  for( Index i = 0 ; i < f_M ; ++i )
+   coeffs[ i ] = { get_knapsack( i , v_K[ j ] )->get_Var( v_pos[ j ] + 1 ) ,
+		   1 };
 
- // generate v_cnstX - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  v_assign[ j ].set_lhs( - Inf< RowConstraint::RHSValue >() , eNoMod );
+  v_assign[ j ].set_rhs( 1 , eNoMod );
+  v_assign[ j ].set_function( new LinearFunction( std::move( coeffs ) ) ,
+			      eNoMod );
+  }
 
- v_cnstX.resize( f_N );
+ add_static_constraint( v_assign , "assign" );
+ add_static_constraint( v_class , "class" );
 
- for( Index i = 0 ; i < f_N ; i++ ){    // for each item
-  
-  LinearFunction::v_coeff_pair x( f_M );
-
-  for( Index m = 0 ; m < f_M ; m++ ){   // for each knapsack
-   
-   Index k = v_K[ i ];                  // class of item i
-   
-   auto bkb = static_cast< BinaryKnapsackBlock * >( v_Block[ m * f_R + k ] );
-   
-   Index s = 0;                         // index of the variable in the
-   while( v_Sk[ k ][ s ] != i )         // sub-Block 
-    s++;
-
-   x[ m ].first = bkb->get_Var( s + 1 ); 
-   x[ m ].second = 1;
-  
-  } // end( for each knapsack )
-
-  v_cnstX[ i ].set_function( new LinearFunction( std::move( x ) , 0 ) );
-  v_cnstX[ i ].set_rhs( 1 );
-  v_cnstX[ i ].set_lhs( - Inf<double>() );
- 
-  add_static_constraint( v_cnstX[ i ] );
-    
- } // end( for each item )
-
-
- // call the base class method
- Block::generate_abstract_constraints();  
+ Block::generate_abstract_constraints( stcc );  // these of the sub-Block
 
  AR |= HasCns;
 
-}
+ }  // end( MultiKnapsackAssignBlock::generate_abstract_constraints )
 
 /*--------------------------------------------------------------------------*/
-/*--------------------- Methods for checking the Block ---------------------*/
+/*------- Methods for reading the data of the MultiKnapsackAssignBlock -----*/
 /*--------------------------------------------------------------------------*/
+
+BinaryKnapsackBlock * MultiKnapsackAssignBlock::get_knapsack( Index i ,
+							       Index k ) const
+{
+ if( ( i >= f_M ) || ( k >= f_R ) )
+  throw( std::invalid_argument(
+	       "MultiKnapsackAssignBlock::get_knapsack: invalid knapsack or "
+	       "class" ) );
+
+ return( static_cast< BinaryKnapsackBlock * >( v_Block[ i * f_R + k ] ) );
+ }
 
 /*--------------------------------------------------------------------------*/
 /*----------------------- Methods for handling Solution --------------------*/
 /*--------------------------------------------------------------------------*/
 
-bool MultiKnapsackAssignBlock::get_x( Index i , Index j ){
-
+double MultiKnapsackAssignBlock::get_x( Index i , Index j ) const
+{
  if( j >= f_N )
-  throw( std::invalid_argument( "invalid item" ) );
+  throw( std::invalid_argument(
+			  "MultiKnapsackAssignBlock::get_x: invalid item" ) );
 
- if( i >= f_M )
-  throw( std::invalid_argument( "invalid knapsack" ) );
-
- Index k = v_K[ j ];   // get the class of item j
-
- auto bkb = static_cast< BinaryKnapsackBlock * >( v_Block[ i * f_R + k ] );
- 
- Index s = 0;                         // index of the variable in the
- while( v_Sk[ k ][ s ] != j )         // sub-Block 
-  s++;
-
- return bkb->get_x( s + 1 );
-
-}
+ return( get_knapsack( i , v_K[ j ] )->get_x( v_pos[ j ] + 1 ) );
+ }
 
 /*--------------------------------------------------------------------------*/
 
-bool MultiKnapsackAssignBlock::get_y( Index i , Index k ){
-
- if( k >= f_R )
-  throw( std::invalid_argument( "invalid class" ) );
-
- if( i >= f_M )
-  throw( std::invalid_argument( "invalid knapsack" ) );
-
- auto bkb = static_cast< BinaryKnapsackBlock * >( v_Block[ i * f_R + k ] );
-
- return bkb->get_x( 0 );
-
-}
-
-
+double MultiKnapsackAssignBlock::get_y( Index i , Index k ) const
+{
+ return( get_knapsack( i , k )->get_x( 0 ) );
+ }
 
 /*--------------------------------------------------------------------------*/
 /*--- METHODS FOR LOADING, PRINTING & SAVING THE MultiKnapsackAssignBlock --*/
 /*--------------------------------------------------------------------------*/
 
-void MultiKnapsackAssignBlock::serialize( netCDF::NcGroup & group ) const {
+void MultiKnapsackAssignBlock::serialize( netCDF::NcGroup & group ) const
+{
+ Block::serialize( group );
 
- // call the method of Block
- Block::serialize( group ); 
+ auto n = group.addDim( "NItems" , f_N );
+ auto r = group.addDim( "NClasses" , f_R );
+ auto m = group.addDim( "NKnapsacks" , f_M );
 
- // MultiKnapsackAssignBlock data
+ auto c = group.addVar( "Capacities" , netCDF::NcDouble() , m );
+ auto p = group.addVar( "Profits" , netCDF::NcDouble() , n );
+ auto w = group.addVar( "Weights" , netCDF::NcDouble() , n );
+ auto k = group.addVar( "Classes" , netCDF::NcUint() , n );
 
- netCDF::NcDim n = group.addDim( "NItems" , f_N );
-
- netCDF::NcDim r = group.addDim( "NClasses" , f_R );
-
- netCDF::NcDim m = group.addDim( "NKnapsacks" , f_M );
-
- ( group.addVar( "Capacities" , netCDF::NcDouble() , m ) ).putVar( v_C.data() ); 
-
- ( group.addVar( "Profits" , netCDF::NcDouble() , n ) ).putVar( v_P.data() );
- 
- ( group.addVar( "Weights" , netCDF::NcDouble() , n ) ).putVar( v_W.data() );
-
- ( group.addVar( "Classes" , netCDF::NcDouble() , n ) ).putVar( v_K.data() );
-
- 
-}// end( MultiKnapsackAssignBlock::serialize )
+ if( f_M )
+  c.putVar( v_C.data() );
+ if( f_N ) {
+  p.putVar( v_P.data() );
+  w.putVar( v_W.data() );
+  k.putVar( v_K.data() );
+  }
+ }  // end( MultiKnapsackAssignBlock::serialize )
 
 /*--------------------------------------------------------------------------*/
-/*------------- METHODS FOR ADDING / REMOVING / CHANGING DATA --------------*/
-/*--------------------------------------------------------------------------*/
 
+void MultiKnapsackAssignBlock::print( std::ostream & output ,
+				      char vlvl ) const
+{
+ output << "MultiKnapsackAssignBlock with " << f_N << " items, " << f_R
+	<< " classes and " << f_M << " knapsacks" << std::endl;
+ if( ! vlvl )
+  return;
 
-/*--------------------------------------------------------------------------*/
-/*------------ METHODS FOR LOADING, PRINTING & SAVING THE Block ------------*/
-/*--------------------------------------------------------------------------*/
-
-void MultiKnapsackAssignBlock::print( std::ostream & output , 
-                                      char vlvl ) const {
-
- output << "MultiKnapsackAssignBlock" << std::endl;
-
- output << "Number of items: " << f_N << std::endl;
-
- output << "Number of classes: " << f_R << std::endl;
-
- output << "Number of knapsacks: " << f_M << std::endl;
-
- output << "Capacities of the knapsacks:" << std::endl;
+ output << "capacities:";
  for( auto c : v_C )
-  output << c << " ";
- output << std::endl;
-
- output << "Item\tProfit\tWeight\tClass" << std::endl;
-
- for( Index i = 0 ; i < f_N ; i++ ){
-  output << i << "\t" << v_P[ i ] << "\t" << v_W[ i ] << "\t" 
-       << v_K[ i ] << std::endl;  
+  output << " " << c;
+ output << std::endl << "item\tprofit\tweight\tclass" << std::endl;
+ for( Index j = 0 ; j < f_N ; ++j )
+  output << j << "\t" << v_P[ j ] << "\t" << v_W[ j ] << "\t" << v_K[ j ]
+	 << std::endl;
  }
-
- output << std::endl; 
-
-}
-
-/*--------------------------------------------------------------------------*/
-
-void MultiKnapsackAssignBlock::load( std::istream & input , char frmt ){
-
- if( f_N )              // erase previous instance, if any
-  guts_of_destructor(); 
-
-
- // read problem data
- if( !( input >> f_N ) )
-  throw( std::invalid_argument( "error reading number of items" ) );
-
- if( !( input >> f_R ) )
-  throw( std::invalid_argument( "error reading number of classes" ) );
-
- if( !( input >> f_M ) )
-  throw( std::invalid_argument( "error reading number of knapsacks" ) );
-
- v_C.resize( f_M );
-
- for( Index i = 0 ; i < f_M ; i++ ){
-  if( !( input >> v_C[ i ] ) )
-   throw( std::invalid_argument( "error reading Capacities" ) );
- }
-
- v_P.resize( f_N );
- v_W.resize( f_N );
- v_K.resize( f_N );
- v_Sk.resize( f_R );
-
- for( Index i = 0 ; i < f_N ; i++ ){
-  
-  Index item;         // skip redundant index of the item
-
-  if( !( input >> item ) )
-   throw( std::invalid_argument( "error reading item" ) );
-
-  if( !( input >> v_P[ i ] ) )
-   throw( std::invalid_argument( "error reading Profits" ) );
-
-  if( !( input >> v_W[ i ] ) )
-   throw( std::invalid_argument( "error reading Weights" ) );
-
-  if( !( input >> v_K[ i ] ) )
-   throw( std::invalid_argument( "error reading Classes" ) );
-
-  if( v_K[ i ] >= f_R )
-   throw( std::invalid_argument( "Invalid class for item " + 
-                    std::to_string( i ) ) ); 
-
-  v_Sk[ v_K[ i ] ].push_back( i );
- 
- }
-
- // create and load sub-Blocks (BinaryKnapsackBlock)
- create_SubBlocks();
-
- // Modification - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-
- if( anyone_there() )
-  add_Modification( std::make_shared< NBModification >( this ) ); 
-
-}
-
-/*--------------------------------------------------------------------------*/
-/*-------------------------- PROTECTED METHODS -----------------------------*/
-/*--------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------*/
 /*-------------------------- PRIVATE METHODS -------------------------------*/
 /*--------------------------------------------------------------------------*/
 
-void MultiKnapsackAssignBlock::guts_of_destructor(){
- 
- // clear the constraint
- for( auto & c : v_cnstX )
+void MultiKnapsackAssignBlock::guts_of_destructor( void )
+{
+ // the Function of the linking Constraint are emptied before the
+ // sub-Block, whose Variable they use, are deleted
+ for( auto & c : v_assign )
   c.clear();
- v_cnstX.clear();
-
- for( auto & c : v_cnstY )
+ for( auto & c : v_class )
   c.clear();
- v_cnstY.clear();
- 
- // delete sub-Blocks
- Index n_Blocks = v_Block.size();
- 
- for( Index i = 0 ; i < n_Blocks ; i++ )
-  delete v_Block[ i ];
+ reset_static_constraints();
+ v_assign.clear();
+ v_class.clear();
 
+ for( auto b : v_Block )
+  delete b;
  v_Block.clear();
 
- // explicitly reset Constraint
- reset_static_constraints();
-
+ v_Sk.clear();
+ v_pos.clear();
  AR = 0;
-
- for( auto & s : v_Sk )
-  s.clear();
- v_Sk.clear(); 
-
-}
+ }
 
 /*--------------------------------------------------------------------------*/
 
-void MultiKnapsackAssignBlock::create_SubBlocks(){
+void MultiKnapsackAssignBlock::build( const std::string & prfx )
+{
+ v_Sk.assign( f_R , Subset() );
+ v_pos.resize( f_N );
+ for( Index j = 0 ; j < f_N ; ++j ) {
+  if( v_K[ j ] >= f_R )
+   throw( std::invalid_argument( prfx + "invalid class of item " +
+				 std::to_string( j ) ) );
+  v_pos[ j ] = v_Sk[ v_K[ j ] ].size();
+  v_Sk[ v_K[ j ] ].push_back( j );
+  }
 
-// create M x R sub-Blocks (BinaryKnapsackBlock).
-// For each class create M BinaryKnapsackBlock containing all the items of the
-// class + an "item" corresponding to the Y[ i , k ] variable that appears in 
-// constraints (2). This "item" has 0 as profit and -C[ i ] as weight, and it
-// will be the first item of each sub-Block.
-
- if( ! v_Block.empty() ){               // delete previous sub-Blocks (if any)
-  
-  Index n_Blocks = v_Block.size();
- 
-  for( Index i = 0 ; i < n_Blocks ; i++ )
-   delete v_Block[ i ];
-
-  v_Block.clear();
- }
-
-// create and load sub-Blocks - - - - - - - - - - - - - - - - - - - - - - - - -
-
- for( Index m = 0 ; m < f_M ; m++ ){  // for each knapsack
-  
-  for( Index k = 0 ; k < f_R ; k++ ){   // for each class
+ // one BinaryKnapsackBlock for each pair ( knapsack i , class k ), whose
+ // first item is y_{ik}, with profit 0 and weight - C_i, and the other ones
+ // are the items of class k, the capacity being 0
+ v_Block.reserve( f_M * f_R );
+ for( Index i = 0 ; i < f_M ; ++i )
+  for( Index k = 0 ; k < f_R ; ++k ) {
+   const auto & items = v_Sk[ k ];
+   std::vector< double > W( items.size() + 1 );
+   std::vector< double > P( items.size() + 1 );
+   W[ 0 ] = - v_C[ i ];
+   P[ 0 ] = 0;
+   for( Index h = 0 ; h < items.size() ; ++h ) {
+    W[ h + 1 ] = v_W[ items[ h ] ];
+    P[ h + 1 ] = v_P[ items[ h ] ];
+    }
 
    auto bkb = new BinaryKnapsackBlock( this );
-    
-   std::vector< double > W = { -v_C[ m ] }; // Initialize profits and weights
-   std::vector< double > P = { 0 };         // with the added "item"
-                                        
-   Index n = v_Sk[ k ].size() + 1;          // number of items of the sub-block
-
-   for( auto i : v_Sk[ k ] ){
-    W.push_back( v_W[ i ] );
-    P.push_back( v_P[ i ] );
-   }  
-
-   bkb->load( n , 0 , std::move( W ) , std::move( P ) );
-
+   bkb->load( items.size() + 1 , 0 , std::move( W ) , std::move( P ) );
    v_Block.push_back( bkb );
-
-  } // end( for each class )
-
- } // end( for each knapsack )
- 
-} // end( create_SubBlocks() )
-
+   }
+ }  // end( MultiKnapsackAssignBlock::build )
 
 /*--------------------------------------------------------------------------*/
 /*----------------- End File MultiKnapsackAssignBlock.cpp ------------------*/

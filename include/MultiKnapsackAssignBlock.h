@@ -1,13 +1,27 @@
 /*--------------------------------------------------------------------------*/
 /*-------------------- File MultiKnapsackAssignBlock.h ---------------------*/
 /*--------------------------------------------------------------------------*/
-
+/** @file
+ * Header file for the class MultiKnapsackAssignBlock, which implements the
+ * Block concept [see Block.h] for the Multiple Knapsack Assignment Problem,
+ * as a set of BinaryKnapsackBlock linked by assignment constraints.
+ *
+ * \author Federica Di Pasquale \n
+ *         Dipartimento di Informatica \n
+ *         Universita' di Pisa \n
+ *
+ * \author Antonio Frangioni \n
+ *         Dipartimento di Informatica \n
+ *         Universita' di Pisa \n
+ *
+ * \copyright &copy; by Federica Di Pasquale, Antonio Frangioni
+ */
 /*--------------------------------------------------------------------------*/
-/*---------------------------- DEFINITIONS ---------------------------------*/
+/*----------------------------- DEFINITIONS --------------------------------*/
 /*--------------------------------------------------------------------------*/
 
 #ifndef __MultiKnapsackAssignBlock
- #define __MultiKnapsackAssignBlock 
+ #define __MultiKnapsackAssignBlock
                       /* self-identification: #endif at the end of the file */
 
 /*--------------------------------------------------------------------------*/
@@ -16,6 +30,8 @@
 
 #include "BinaryKnapsackBlock.h"
 
+#include "FRowConstraint.h"
+
 /*--------------------------------------------------------------------------*/
 /*------------------------------ NAMESPACE ---------------------------------*/
 /*--------------------------------------------------------------------------*/
@@ -23,109 +39,79 @@
 /// namespace for the Structured Modeling System++ (SMS++)
 namespace SMSpp_di_unipi_it
 {
-
 /*--------------------------------------------------------------------------*/
-/*------------------------------- CLASSES ----------------------------------*/
+/*-------------------------------- CLASSES ---------------------------------*/
 /*--------------------------------------------------------------------------*/
+/** @defgroup MultiKnapsackAssignBlock_CLASSES Classes in
+ *  MultiKnapsackAssignBlock.h
+ *  @{ */
 
 /*--------------------------------------------------------------------------*/
 /*--------------------- CLASS MultiKnapsackAssignBlock ---------------------*/
 /*--------------------------------------------------------------------------*/
 /*--------------------------- GENERAL NOTES --------------------------------*/
 /*--------------------------------------------------------------------------*/
-/// implementation of the Block concept for the Multiple Knapsack Assignment 
-/// problem
-/** The MultiKnapsackAssignBlock class implements the Block concept 
-* [see Block.h] for the Multiple Knapsack Assignment Problem (MKAP).
-*
-* The MKAP is defined on a set of N items and M knapsacks, where the items 
-* are partitioned into R classes. Each Knapsack has a Capacity and each item 
-* has a weight and a profit, and the objective is to select M disjoint subsets
-* of items to be assigned to the knapsacks so that the total profit is 
-* maximized. Each Knapsack can contain only items of the same class, whose 
-* total weight must be less or equal than its Capacity.  
-*
-* The data of the problem consist of:
-*
-*   - N: the number of items
-*   - M: the number of knapsacks
-*   - R: the number of classes
-*   
-*   - W: a vector of size N s.t. W[ j ] is the weight of item j
-*   - P: a vecotr of size N s.t. P[ j ] is the profit of item j
-*   - K: a vector of size N s.t. K[ j ] is the class of item j
-*   - C: a vector of size M s.t. C[ i ] is the capacity of knapsack i
-*
-* A formulation of the problem is:
-* \f[
-* \max \sum_{ j = 1 }^{ N } P[ j ] \sum_{ i = 1 }^{ M } X[ i , j ]
-* \f]
-* \f[
-* \sum_{ i = 1 }^{ M } X[ i , j ] \leq 1 \quad j = 1 , \dots , N    (1)
-* \f]
-* \f[
-* \sum_{ j \in Sk } W[ j ] X[ i , j ] \leq C[ i ] Y[ i , k ] 
-*       \quad i = 1 , \dots , M \quad k = 1, \dots , R              (2)
-* \f]
-* \f[
-* \sum_{ k = 1 }^{ R } Y[ i , k ] \leq 1 \quad i = 1 , \dots , M    (3)
-* \f]
-* \f[
-* X[ i , j ] \in \{ 0 , 1 \} \quad i = 0 , \dots , M 
-*                            \quad j = 0 , \dots , N                (4)
-* \f]
-* \f[
-* Y[ i , k ] \in \{ 0 , 1 \} \quad i = 0 , \dots , M 
-*                            \quad k = 0 , \dots , R                (5)
-* \f]
-*
-* MultiKnapsackAssignBlock is constructed by means of R x M sub-Blocks 
-* (BinaryKnapsackBlock), one for each combination of (knapsack, class) and it
-* only contains the linking constraints (1) and (3). The Y[ i , k ] variables
-* are treated as additional "item" of each sub-Block, having 0 as profit and
-* -C[ i ] as weight. */
+/// a Block for the Multiple Knapsack Assignment Problem
+/** The MultiKnapsackAssignBlock class implements the Block concept [see
+ * Block.h] for the Multiple Knapsack Assignment Problem (MKAP). It is defined
+ * on a set of N items, partitioned into R classes, and on M knapsacks; each
+ * item j has a weight W[ j ], a profit P[ j ] and a class K[ j ], and each
+ * knapsack i has a capacity C[ i ]. Each knapsack is given (at most) one
+ * class, and only holds items of that class whose total weight is at most
+ * its capacity; each item goes in at most one knapsack, and the total profit
+ * of the items in the knapsacks is maximized. Denoting by S_k the items of
+ * class k, the problem is
+ * \f[
+ *  \max \Bigl\{ \, \sum_{ i = 1 }^M \sum_{ j = 1 }^N P_j x_{ij} \;:\;
+ *  \sum_{ i = 1 }^M x_{ij} \leq 1 \;\; j = 1 , \ldots , N \,,\;
+ *  \sum_{ k = 1 }^R y_{ik} \leq 1 \;\; i = 1 , \ldots , M \,,\;
+ *  ( x , y ) \in X \, \Bigr\}
+ * \f]
+ * where \f$ X \f$ is the set of the binary \f$ ( x , y ) \f$ such that
+ * \f[
+ *  \sum_{ j \in S_k } W_j x_{ij} \leq C_i y_{ik}
+ *  \quad i = 1 , \ldots , M \,,\; k = 1 , \ldots , R \;.
+ * \f]
+ *
+ * The problem is represented by M * R sub-Block, one BinaryKnapsackBlock for
+ * each pair ( i , k ) of a knapsack and a class, in the order ( 0 , 0 ),
+ * ( 0 , 1 ), ..., ( 0 , R - 1 ), ( 1 , 0 ), ... (i.e., the sub-Block of the
+ * pair ( i , k ) is the ( i * R + k )-th one). The first item of the
+ * sub-Block of ( i , k ) is \f$ y_{ik} \f$, with profit 0 and weight
+ * \f$ - C_i \f$, and the other ones are the items of class k, in increasing
+ * order of their index, the capacity of the BinaryKnapsackBlock being 0.
+ * Thus, the MultiKnapsackAssignBlock itself only has the static Constraint
+ * linking the sub-Block, i.e., the N "assignment" ones and the M "one class"
+ * ones above, and no Variable and Objective of its own: the objective is the
+ * sum of these of the sub-Block. */
 
-
-class MultiKnapsackAssignBlock : public Block {
-
+class MultiKnapsackAssignBlock : public Block
+{
 /*--------------------------------------------------------------------------*/
 /*----------------------- PUBLIC PART OF THE CLASS -------------------------*/
 /*--------------------------------------------------------------------------*/
 
-public:
+ public:
 
-/*--------------------------------------------------------------------------*/
-/*---------------------------- PUBLIC TYPES --------------------------------*/
-/*--------------------------------------------------------------------------*/
-/** @name Public types
- @{ */
-
-
-/**@} ----------------------------------------------------------------------*/
-/*------------------------------- FRIENDS ----------------------------------*/
-/*--------------------------------------------------------------------------*/
-
-
-/*--------------------------------------------------------------------------*/
-/*--------------------- PUBLIC METHODS OF THE CLASS ------------------------*/
 /*--------------------------------------------------------------------------*/
 /*--------------------- CONSTRUCTOR AND DESTRUCTOR -------------------------*/
 /*--------------------------------------------------------------------------*/
 /** @name Constructor and Destructor
  *  @{ */
 
- /// constructor of MultiKnapsackAssignBlock, taking a pointer to the father 
- /** Constructor of MultiKnapsackAssignBlock. It accepts a pointer to the 
-  * father Block, which can be of any type, defaulting to nullpt so that this  
-  * can also be used as the void constructor. */
+ /// constructor of MultiKnapsackAssignBlock, taking a pointer to the father
+ /** Constructor of MultiKnapsackAssignBlock. It accepts a pointer to the
+  * father Block, which can be of any type, defaulting to nullptr so that
+  * this can also be used as the void constructor required by the Block
+  * factory. */
 
-explicit MultiKnapsackAssignBlock( Block * father = nullptr ) : Block( father ),
-                                   f_N( 0 ) , f_M( 0 ) , f_R( 0 ) , AR( 0 ) {}
+ explicit MultiKnapsackAssignBlock( Block * father = nullptr )
+  : Block( father ) , f_N( 0 ) , f_R( 0 ) , f_M( 0 ) , AR( 0 ) {}
 
 /*--------------------------------------------------------------------------*/
- /// destructor of MultiKnapsackAssignBlock
+ /// destructor of MultiKnapsackAssignBlock: deletes the sub-Block
 
-virtual ~MultiKnapsackAssignBlock(){ guts_of_destructor(); }
+ ~MultiKnapsackAssignBlock() override { guts_of_destructor(); }
 
 /**@} ----------------------------------------------------------------------*/
 /*-------------------------- OTHER INITIALIZATIONS -------------------------*/
@@ -134,69 +120,97 @@ virtual ~MultiKnapsackAssignBlock(){ guts_of_destructor(); }
  *  @{ */
 
  /// loads the Multiple Knapsack Assignment instance from memory
- /** Loads the Multiple Knapsack Assignment instance from memory. 
-  * The parameters are:
+ /** Loads the Multiple Knapsack Assignment instance from memory, moving the
+  * data from the parameters:
   *
-  * - n             is the number of items
+  * - n           is the number of items
   *
-  * - r             is the number of classes
+  * - r           is the number of classes
   *
-  * - m             is the number of knapsacks
+  * - m           is the number of knapsacks
   *
-  * - Capacities    vector of Capacities, which must have size equal to m
+  * - Capacities  is the vector of the capacities, of size m
   *
-  * - Profits       vector of Profits, which must have size equal to n
+  * - Profits     is the vector of the profits, of size n
   *
-  * - Weights       vector of Weights, which must have size equal to n
+  * - Weights     is the vector of the weights, of size n
   *
-  * - Classes       vector of Classes, which must have size equal to n
-  *  
-  * Like load( std::istream & ), if there is any Solver attached to this
-  * MultiKnapsackAssignBlock then a NBModification (the "nuclear option") is 
-  * issued. */
+  * - Classes     is the vector of the classes, of size n, each entry being
+  *               in [ 0 , r )
+  *
+  * Any previous instance, together with its sub-Block and its abstract
+  * representation, is discarded. Like load( std::istream & ), if there is
+  * any Solver attached to this MultiKnapsackAssignBlock then a
+  * NBModification (the "nuclear option") is issued. */
 
-void load( Index n , Index r , Index m , std::vector< double > && Capacities , 
-           std::vector< double > && Profits , std::vector< double > && Weights, 
-           Subset && Classes );
+ void load( Index n , Index r , Index m , std::vector< double > && Capacities ,
+            std::vector< double > && Profits ,
+            std::vector< double > && Weights , Subset && Classes );
+
+/*--------------------------------------------------------------------------*/
+ /// loads the MultiKnapsackAssignBlock out of an istream
+ /** Loads the MultiKnapsackAssignBlock out of an istream, in the format
+  *
+  * - the number n of items, the number r of classes and the number m of
+  *   knapsacks
+  *
+  * - the m capacities of the knapsacks
+  *
+  * - for each item j = 0 , ... , n - 1: its index (which is ignored), its
+  *   profit, its weight and its class (in [ 0 , r ))
+  *
+  * the elements being separated by whitespaces; \p frmt is ignored. Any
+  * previous instance is discarded, and if there is any Solver attached to
+  * this MultiKnapsackAssignBlock then a NBModification is issued. */
+
+ void load( std::istream & input , char frmt = 0 ) override;
 
 /*--------------------------------------------------------------------------*/
  /// extends Block::deserialize( netCDF::NcGroup )
  /** Extends Block::deserialize( netCDF::NcGroup ) to the specific format of
-  * a MultiKnapsackAssignBlock. Besides what is managed by serialize() method  
-  * of the base Block class, the group should contains the following:
+  * a MultiKnapsackAssignBlock. Besides what is managed by
+  * Block::deserialize(), the group must contain:
   *
-  * - the dimension "NItems" containing the number of items
+  * - the dimension "NItems", the number of items;
   *
-  * - the dimension "NClasses" containing the number of classes
+  * - the dimension "NClasses", the number of classes;
   *
-  * - the dimension "NKnapsacks" containing the number of knapsacks
+  * - the dimension "NKnapsacks", the number of knapsacks;
   *
-  * - the variable "Capacities" of type double and indexed over the dimension
-  *   "NKnapsacks"; the i-th entry of the variable is assumed to contain the
-  *   Capacity of the i.th Knapsack
+  * - the variable "Capacities", of type double and indexed over
+  *   "NKnapsacks", the capacities of the knapsacks;
   *
-  * - the variable "Profits" of type double and indexed over the dimension
-  *   "NItems"; the i-th entry of the variable is assumed to contain the 
-  *   profit of the i-th item
+  * - the variable "Profits", of type double and indexed over "NItems", the
+  *   profits of the items;
   *
-  * - the variable "Weights" of type double and indexed over the dimension
-  *   "NItems"; the i-th entry of the variable is assumed to contain the 
-  *   weight of th i-th item
+  * - the variable "Weights", of type double and indexed over "NItems", the
+  *   weights of the items;
   *
-  * - the variable "Classes" of type double and indexed over the dimension
-  *   "NItems"; the i-th entry of the variable is assumed to contain the 
-  *   class of th i-th item  
+  * - the variable "Classes", of integer type and indexed over "NItems", the
+  *   classes of the items, each in [ 0 , NClasses ).
   *
-  * All dimensions and variables are mandatory. */
+  * Any previous instance is discarded, and the NBModification is issued by
+  * Block::deserialize(). */
 
-void deserialize( const netCDF::NcGroup & group ) override;
+ void deserialize( const netCDF::NcGroup & group ) override;
 
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
- /// generate the static constraints of the Multiple Knapsack Assignment.
- /** Method that generates the abstract constraints of the Multiple Knapsack
-  * Assignment Problem  */
+/*--------------------------------------------------------------------------*/
+ /// generates the Variable of the sub-Block
+ /** The MultiKnapsackAssignBlock has no Variable of its own: this generates
+  * these of the sub-Block, which the linking Constraint use. */
 
-void generate_abstract_constraints( Configuration * stcc = nullptr )override;
+ void generate_abstract_variables( Configuration * stvv = nullptr ) override;
+
+/*--------------------------------------------------------------------------*/
+ /// generates the linking Constraint, and these of the sub-Block
+ /** Generates the N "assignment" Constraint and the M "one class"
+  * Constraint, which link the sub-Block (whose Variable are generated
+  * first, if they are not there yet), and then the Constraint of the
+  * sub-Block. The two groups are named "assign" and "class". No
+  * Modification is issued. */
+
+ void generate_abstract_constraints( Configuration * stcc = nullptr )
+  override;
 
 /**@} ----------------------------------------------------------------------*/
 /*------- Methods for reading the data of the MultiKnapsackAssignBlock -----*/
@@ -204,98 +218,97 @@ void generate_abstract_constraints( Configuration * stcc = nullptr )override;
 /** @name Methods for reading the data of the MultiKnapsackAssignBlock
  *  @{ */
 
-/*--------------------------------------------------------------------------*/
- /// get the sense of the Objective
+ /// the sense of the Objective, which is to be maximized
 
-int get_objective_sense() const override final { 
- return( Objective::eMax );
-}
-
-/*--------------------------------------------------------------------------*/
-/// get the number of items
-
-Index get_NItems(){ return f_N; }
+ [[nodiscard]] int get_objective_sense( void ) const override final {
+  return( Objective::eMax );
+  }
 
 /*--------------------------------------------------------------------------*/
-/// get the number of classes
+ /// the number of items
 
-Index get_NClasses(){ return f_R; }
-
-/*--------------------------------------------------------------------------*/
-/// get the number of knapsacks
-
-Index get_NKnapsacks(){ return f_M; }
+ [[nodiscard]] Index get_NItems( void ) const { return( f_N ); }
 
 /*--------------------------------------------------------------------------*/
-/// given an index m get the Capacity of the m-th Knapsack
+ /// the number of classes
 
-double get_Capacity( Index m ){ 
- 
- if( m >= f_M )
-  throw( std::invalid_argument( "invalid knapsack index" ) );  
-
- return v_C[ m ]; 
-
-}
+ [[nodiscard]] Index get_NClasses( void ) const { return( f_R ); }
 
 /*--------------------------------------------------------------------------*/
-/// get the vector of Capacities
+ /// the number of knapsacks
 
-const std::vector< double > & get_Capacities() const { return v_C; }
-
-/*--------------------------------------------------------------------------*/
-/// given an index i get the Weight of the i-th item
-
-double get_Weight( Index i ){ 
- 
- if( i >= f_N )
-  throw( std::invalid_argument( "invalid item index" ) );  
-
- return v_W[ i ]; 
-
-}
+ [[nodiscard]] Index get_NKnapsacks( void ) const { return( f_M ); }
 
 /*--------------------------------------------------------------------------*/
-/// get the vector of Weights
+ /// the capacity of the i-th knapsack
 
-const std::vector< double > & get_Weights() const { return v_W; }
-
-/*--------------------------------------------------------------------------*/
-/// given an index i get the Profit of the i-th item
-
-double get_Profit( Index i ){ 
-
- if( i >= f_N )
-  throw( std::invalid_argument( "invalid item index" ) );  
- 
- return v_P[ i ]; 
-
-}
+ [[nodiscard]] double get_Capacity( Index i ) const {
+  if( i >= f_M )
+   throw( std::invalid_argument( "MultiKnapsackAssignBlock::get_Capacity: "
+				 "invalid knapsack" ) );
+  return( v_C[ i ] );
+  }
 
 /*--------------------------------------------------------------------------*/
-/// get the vector of Profits
+ /// the vector of the capacities
 
-const std::vector< double > & get_Profits() const { return v_P; }
+ [[nodiscard]] const std::vector< double > & get_Capacities( void ) const {
+  return( v_C );
+  }
 
 /*--------------------------------------------------------------------------*/
-/// given an index i get the class of the i-th item
+ /// the weight of the j-th item
 
-Index get_Class( Index i ){ 
+ [[nodiscard]] double get_Weight( Index j ) const {
+  if( j >= f_N )
+   throw( std::invalid_argument(
+		      "MultiKnapsackAssignBlock::get_Weight: invalid item" ) );
+  return( v_W[ j ] );
+  }
 
- if( i >= f_N )
-  throw( std::invalid_argument( "invalid item index" ) );  
-
- return v_K[ i ]; 
-
-}
-
-/**@} ----------------------------------------------------------------------*/
-/*--------------------- Methods for checking the Block ---------------------*/
 /*--------------------------------------------------------------------------*/
-/** @name Methods for checking the Block
- *  @{ */
+ /// the vector of the weights
 
+ [[nodiscard]] const std::vector< double > & get_Weights( void ) const {
+  return( v_W );
+  }
 
+/*--------------------------------------------------------------------------*/
+ /// the profit of the j-th item
+
+ [[nodiscard]] double get_Profit( Index j ) const {
+  if( j >= f_N )
+   throw( std::invalid_argument(
+		      "MultiKnapsackAssignBlock::get_Profit: invalid item" ) );
+  return( v_P[ j ] );
+  }
+
+/*--------------------------------------------------------------------------*/
+ /// the vector of the profits
+
+ [[nodiscard]] const std::vector< double > & get_Profits( void ) const {
+  return( v_P );
+  }
+
+/*--------------------------------------------------------------------------*/
+ /// the class of the j-th item
+
+ [[nodiscard]] Index get_Class( Index j ) const {
+  if( j >= f_N )
+   throw( std::invalid_argument(
+		       "MultiKnapsackAssignBlock::get_Class: invalid item" ) );
+  return( v_K[ j ] );
+  }
+
+/*--------------------------------------------------------------------------*/
+ /// the vector of the classes
+
+ [[nodiscard]] c_Subset & get_Classes( void ) const { return( v_K ); }
+
+/*--------------------------------------------------------------------------*/
+ /// the sub-Block of the knapsack i and of the class k
+
+ [[nodiscard]] BinaryKnapsackBlock * get_knapsack( Index i , Index k ) const;
 
 /**@} ----------------------------------------------------------------------*/
 /*----------------------- Methods for handling Solution --------------------*/
@@ -303,22 +316,17 @@ Index get_Class( Index i ){
 /** @name Methods for handling Solution
  *  @{ */
 
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
- /// given the knapsack i and the item j gets the solution
+ /// the value of x_{ij}, i.e., whether item j is in knapsack i
+ /** The value of x_{ij} in the solution of the sub-Block, i.e., that of the
+  * item j in the sub-Block of the knapsack i and of the class of j (0 if
+  * no solution is there). */
 
-bool get_x( Index i , Index j );
+ [[nodiscard]] double get_x( Index i , Index j ) const;
 
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
- /// given the knapsack i and the class k gets the solution
-
-bool get_y( Index i , Index k );
-
-
-/**@} ----------------------------------------------------------------------*/
-/*-------------------- Methods for handling Modification -------------------*/
 /*--------------------------------------------------------------------------*/
-/** @name Methods for handling Modification
- *  @{ */
+ /// the value of y_{ik}, i.e., whether knapsack i is given class k
+
+ [[nodiscard]] double get_y( Index i , Index k ) const;
 
 /**@} ----------------------------------------------------------------------*/
 /*--- METHODS FOR LOADING, PRINTING & SAVING THE MultiKnapsackAssignBlock --*/
@@ -326,107 +334,92 @@ bool get_y( Index i , Index k );
 /** @name Methods for loading, printing & saving the MultiKnapsackAssignBlock
  *  @{ */
 
-/// extends Block::serialize( netCDF::NcGroup )
-/** Extends Block::serialize( netCDF::NcGroup ) to the specific format of a
- * MultiKnapsackAssignBlock. 
- * See MultiKnapsackAssignBlock::deserialize(netCDF::NcGroup) for details of 
- * the format of the created netCDF group. */
+ /// extends Block::serialize( netCDF::NcGroup )
+ /** Extends Block::serialize( netCDF::NcGroup ) to the specific format of a
+  * MultiKnapsackAssignBlock [see deserialize( netCDF::NcGroup )]. */
 
-void serialize( netCDF::NcGroup & group ) const override;
+ void serialize( netCDF::NcGroup & group ) const override;
 
-/**@} ----------------------------------------------------------------------*/
-/*------------- METHODS FOR ADDING / REMOVING / CHANGING DATA --------------*/
 /*--------------------------------------------------------------------------*/
-/** @name Changing the data of the Multiple Knapsack Assignment instance */
-
-
-/** @} ---------------------------------------------------------------------*/
-/*------------ METHODS FOR LOADING, PRINTING & SAVING THE Block ------------*/
-/*--------------------------------------------------------------------------*/
-/** @name Methods for loading, printing & saving the Block */
-
- /// print the MultiKnapsackAssignBlock on an ostream
- /** Protected method to print information about the 
- * MultiKnapsackAssignBlock */ 
+ /// prints the data of the MultiKnapsackAssignBlock on an ostream
 
  void print( std::ostream & output , char vlvl = 0 ) const override;
 
-/*--------------------------------------------------------------------------*/
- /// load instance from txt file  
-/** Protected method for loading a MultiKnapsackAssignBlock out of 
- * std::istream */      
-
- void load( std::istream & input , char frmt = 0 ) override;
-
-
-/**@} ----------------------------------------------------------------------*/
+/** @} ---------------------------------------------------------------------*/
 /*-------------------- PROTECTED PART OF THE CLASS -------------------------*/
 /*--------------------------------------------------------------------------*/
 
-protected:
+ protected:
 
 /*--------------------------------------------------------------------------*/
-/*-------------------------- PROTECTED METHODS -----------------------------*/
-/*--------------------------------------------------------------------------*/
-/** @name Protected methods for inserting and extracting
- *  @{ */
-
-/**@} ----------------------------------------------------------------------*/
 /*--------------------------- PROTECTED FIELDS  ----------------------------*/
 /*--------------------------------------------------------------------------*/
 
-Index f_N;                      ///< the number of Items
-Index f_R;                      ///< the number of Classes
-Index f_M;                      ///< the number of Knapsacks
+ Index f_N;                   ///< the number of items
+ Index f_R;                   ///< the number of classes
+ Index f_M;                   ///< the number of knapsacks
 
-std::vector< double > v_C;      ///< vector of Capacities
-std::vector< double > v_P;      ///< vector of Profits
-std::vector< double > v_W;      ///< vector of Weights
-Subset v_K;                     ///< vector of Classes     
+ std::vector< double > v_C;   ///< the capacities
+ std::vector< double > v_P;   ///< the profits
+ std::vector< double > v_W;   ///< the weights
+ Subset v_K;                  ///< the classes
 
-std::vector< Subset > v_Sk;     // (redundant but helpful)
-///< vector of class subsets, each entry contains the items of one class 
+ /// the items of each class, in increasing order
+ std::vector< Subset > v_Sk;
 
-unsigned char AR;               ///< bit-wise coded: what abstract is there
+ /// the position of each item among these of its class
+ Subset v_pos;
 
-static constexpr unsigned char HasCns = 4;
-///< third bit of AR == 1 if the Constraints has been constructed
+ unsigned char AR;            ///< bit-wise coded: what abstract is there
 
-std::vector< FRowConstraint > v_cnstX;  
-///< Each item is assigned to at most one Knapsack
-std::vector< FRowConstraint > v_cnstY;  
-///< Each knapsack contains items of at most one class
+ static constexpr unsigned char HasVar = 1;
+ ///< first bit of AR == 1 if the Variable have been constructed
+
+ static constexpr unsigned char HasCns = 2;
+ ///< second bit of AR == 1 if the Constraint have been constructed
+
+ /// the assignment Constraint: each item in at most one knapsack
+ std::vector< FRowConstraint > v_assign;
+
+ /// the class Constraint: each knapsack is given at most one class
+ std::vector< FRowConstraint > v_class;
 
 /*--------------------------------------------------------------------------*/
 /*--------------------- PRIVATE PART OF THE CLASS --------------------------*/
 /*--------------------------------------------------------------------------*/
 
-private:
+ private:
 
 /*--------------------------------------------------------------------------*/
 /*-------------------------- PRIVATE METHODS -------------------------------*/
 /*--------------------------------------------------------------------------*/
 
-void guts_of_destructor();
+ /// discards the instance, its sub-Block and its abstract representation
 
-void create_SubBlocks();
+ void guts_of_destructor( void );
+
+/*--------------------------------------------------------------------------*/
+ /// checks the data, then builds v_Sk, v_pos and the sub-Block
+
+ void build( const std::string & prfx );
 
 /*--------------------------------------------------------------------------*/
 /*---------------------------- PRIVATE FIELDS ------------------------------*/
 /*--------------------------------------------------------------------------*/
 
-SMSpp_insert_in_factory_h; 
-// insert MultiKnapsackAssignBlock in the Block factory
+ SMSpp_insert_in_factory_h;  // insert it in the Block factory
 
 /*--------------------------------------------------------------------------*/
+
+ };  // end( class( MultiKnapsackAssignBlock ) )
+
+/** @} end( group( MultiKnapsackAssignBlock_CLASSES ) ) */
+
 /*--------------------------------------------------------------------------*/
 
-}; // end( class( MultiKnapsackAssignBlock ) )
+}  // end( namespace SMSpp_di_unipi_it )
 
-
-} // end( namespace SMSpp_di_unipi_it )
-
-#endif /* MultiKnapsackAssignBlock.h included */
+#endif  /* MultiKnapsackAssignBlock.h included */
 
 /*--------------------------------------------------------------------------*/
 /*------------------ End File MultiKnapsackAssignBlock.h -------------------*/
