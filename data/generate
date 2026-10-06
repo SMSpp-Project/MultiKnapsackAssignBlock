@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+##############################################################################
+################################# generate ###################################
+##############################################################################
+#                                                                            #
+#   Generator of instances of the Multiple Knapsack Assignment Problem in    #
+#   the txt format of MultiKnapsackAssignBlock::load( std::istream & ).      #
+#                                                                            #
+#   usage: generate <n> <r> <m> <corr> <seed> [ <range> ]                    #
+#          <n>     = number of items                                         #
+#          <r>     = number of classes                                       #
+#          <m>     = number of knapsacks                                     #
+#          <corr>  = u (uncorrelated), w (weakly correlated) or s            #
+#                    (strongly correlated) profits and weights               #
+#          <seed>  = seed of the random generator                            #
+#          <range> = largest weight, default 1000                            #
+#                                                                            #
+#   The class of each item is drawn uniformly in [ 0 , r ), its weight w     #
+#   uniformly in [ 1 , range ], and its profit as in the classical classes   #
+#   of the 0-1 knapsack problem: uniformly in [ 1 , range ] (u), uniformly   #
+#   in [ w - range / 10 , w + range / 10 ] and at least 1 (w), or            #
+#   w + range / 10 (s). The capacity of each knapsack is drawn uniformly in  #
+#   [ 0.5 , 1.5 ] times the total weight over 2 m, so that the knapsacks     #
+#   hold about half of the total weight. The instance is written on the      #
+#   standard output.                                                         #
+#                                                                            #
+##############################################################################
+
+import random
+import sys
+
+if len( sys.argv ) not in ( 6 , 7 ):
+    sys.exit( "usage: generate <n> <r> <m> <corr> <seed> [ <range> ]" )
+
+n , r , m = ( int( a ) for a in sys.argv[ 1 : 4 ] )
+corr = sys.argv[ 4 ]
+rng = random.Random( int( sys.argv[ 5 ] ) )
+R = int( sys.argv[ 6 ] ) if len( sys.argv ) == 7 else 1000
+if corr not in ( "u" , "w" , "s" ) or min( n , r , m ) < 1 or R < 10:
+    sys.exit( "generate: invalid arguments" )
+
+items = []
+for j in range( n ):
+    w = rng.randint( 1 , R )
+    if corr == "u":
+        p = rng.randint( 1 , R )
+    elif corr == "w":
+        p = max( 1 , rng.randint( w - R // 10 , w + R // 10 ) )
+    else:
+        p = w + R // 10
+    items.append( ( p , w , rng.randrange( r ) ) )
+
+total = sum( w for _ , w , _ in items )
+caps = [ max( 1 , round( rng.uniform( 0.5 , 1.5 ) * total / ( 2 * m ) ) )
+         for _ in range( m ) ]
+
+print( "# Multiple Knapsack Assignment instance: n = %d, r = %d, m = %d, "
+       "corr = %s, seed = %s, range = %d" % ( n , r , m , corr ,
+                                              sys.argv[ 5 ] , R ) )
+print( n , r , m )
+print( " ".join( str( c ) for c in caps ) )
+for j , ( p , w , k ) in enumerate( items ):
+    print( j , p , w , k )

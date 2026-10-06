@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+#
+# usage: make-txt
+#
+# Writes in txt/ the instances of the Multiple Knapsack Assignment Problem
+# that the tests use, by generate: for n = 50 and 100 items, ( r , m ) =
+# ( 2 , 4 ) and ( 4 , 8 ) classes and knapsacks, and the three classes of
+# correlation of profits and weights, with seed 1.
+
+cd "$(dirname "$0")" || exit 1
+mkdir -p txt
+for n in 50 100; do
+  for rm in "2 4" "4 8"; do
+    set -- $rm
+    for c in u w s; do
+      ./generate "$n" "$1" "$2" "$c" 1 > "txt/mkap-n$n-r$1-m$2-$c.txt"
+    done
+  done
+done
