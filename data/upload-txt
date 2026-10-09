@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+cd ../..
+# the archive goes out as the version that CMakeLists.txt downloads, which
+# new data have to raise first [see DATA_VERSION there]
+cml=MultiKnapsackAssignBlock/CMakeLists.txt
+bash upload-to-package-registry MultiKnapsackAssignBlock/data/txt.tgz \
+     "$(sed -n 's/^set(DATA_VERSION \(.*\))$/\1/p' "$cml")"
