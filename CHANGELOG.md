@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-09
+
 ### Added
 
 - the module has the layout, the build files and the CI of ModuleTemplate,
@@ -39,3 +41,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   integer or floating point type
 
 [Unreleased]: https://gitlab.com/smspp/multiknapsackassignblock/-/compare/0.1.0...develop
+[0.1.0]: https://gitlab.com/smspp/multiknapsackassignblock/-/tags/0.1.0
