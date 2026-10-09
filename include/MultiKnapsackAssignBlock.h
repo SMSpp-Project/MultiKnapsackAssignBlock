@@ -6,15 +6,20 @@
  * Block concept [see Block.h] for the Multiple Knapsack Assignment Problem,
  * as a set of BinaryKnapsackBlock linked by assignment constraints.
  *
- * \author Federica Di Pasquale \n
- *         Dipartimento di Informatica \n
- *         Universita' di Pisa \n
- *
  * \author Antonio Frangioni \n
  *         Dipartimento di Informatica \n
  *         Universita' di Pisa \n
  *
- * \copyright &copy; by Federica Di Pasquale, Antonio Frangioni
+ * \author Federica Di Pasquale \n
+ *         Dipartimento di Informatica \n
+ *         Universita' di Pisa \n
+ *
+ * \author Donato Meoli \n
+ *         Dipartimento di Informatica \n
+ *         Universita' di Pisa \n
+ *
+ * \copyright &copy; by Antonio Frangioni, Federica Di Pasquale,
+ *            Donato Meoli
  */
 /*--------------------------------------------------------------------------*/
 /*----------------------------- DEFINITIONS --------------------------------*/
@@ -316,15 +321,15 @@ class MultiKnapsackAssignBlock : public Block
 /** @name Methods for handling Solution
  *  @{ */
 
- /// the value of x_{ij}, i.e., whether item j is in knapsack i
- /** The value of x_{ij} in the solution of the sub-Block, i.e., that of the
-  * item j in the sub-Block of the knapsack i and of the class of j (0 if
-  * no solution is there). */
+ /// the value of \f$ x_{ij} \f$, i.e., whether item j is in knapsack i
+ /** The value of \f$ x_{ij} \f$ in the solution of the sub-Block, i.e., that
+  * of the item j in the sub-Block of the knapsack i and of the class of j
+  * (0 if no solution is there). */
 
  [[nodiscard]] double get_x( Index i , Index j ) const;
 
 /*--------------------------------------------------------------------------*/
- /// the value of y_{ik}, i.e., whether knapsack i is given class k
+ /// the value of \f$ y_{ik} \f$, i.e., whether knapsack i is given class k
 
  [[nodiscard]] double get_y( Index i , Index k ) const;
 
@@ -352,7 +357,7 @@ class MultiKnapsackAssignBlock : public Block
  protected:
 
 /*--------------------------------------------------------------------------*/
-/*--------------------------- PROTECTED FIELDS  ----------------------------*/
+/*---------------------------- PROTECTED FIELDS ----------------------------*/
 /*--------------------------------------------------------------------------*/
 
  Index f_N;                   ///< the number of items

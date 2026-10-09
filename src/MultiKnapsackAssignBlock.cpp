@@ -4,15 +4,20 @@
 /** @file
  * Implementation of the MultiKnapsackAssignBlock class.
  *
- * \author Federica Di Pasquale \n
- *         Dipartimento di Informatica \n
- *         Universita' di Pisa \n
- *
  * \author Antonio Frangioni \n
  *         Dipartimento di Informatica \n
  *         Universita' di Pisa \n
  *
- * \copyright &copy; by Federica Di Pasquale, Antonio Frangioni
+ * \author Federica Di Pasquale \n
+ *         Dipartimento di Informatica \n
+ *         Universita' di Pisa \n
+ *
+ * \author Donato Meoli \n
+ *         Dipartimento di Informatica \n
+ *         Universita' di Pisa \n
+ *
+ * \copyright &copy; by Antonio Frangioni, Federica Di Pasquale,
+ *            Donato Meoli
  */
 /*--------------------------------------------------------------------------*/
 /*----------------------------- IMPLEMENTATION -----------------------------*/
@@ -85,8 +90,8 @@ void MultiKnapsackAssignBlock::load( std::istream & input , char frmt )
  guts_of_destructor();  // discard the previous instance, if any
 
  if( ! ( input >> eatcomments >> f_N ) )
-  throw( std::invalid_argument( _prfx + "error reading the number of items"
-				) );
+  throw( std::invalid_argument( _prfx +
+				"error reading the number of items" ) );
  if( ! ( input >> eatcomments >> f_R ) )
   throw( std::invalid_argument( _prfx +
 				"error reading the number of classes" ) );
@@ -231,7 +236,8 @@ BinaryKnapsackBlock * MultiKnapsackAssignBlock::get_knapsack( Index i ,
 	       "class" ) );
 
  return( static_cast< BinaryKnapsackBlock * >( v_Block[ i * f_R + k ] ) );
- }
+
+ }  // end( MultiKnapsackAssignBlock::get_knapsack )
 
 /*--------------------------------------------------------------------------*/
 /*----------------------- Methods for handling Solution --------------------*/
@@ -277,6 +283,7 @@ void MultiKnapsackAssignBlock::serialize( netCDF::NcGroup & group ) const
   w.putVar( v_W.data() );
   k.putVar( v_K.data() );
   }
+
  }  // end( MultiKnapsackAssignBlock::serialize )
 
 /*--------------------------------------------------------------------------*/
@@ -296,7 +303,8 @@ void MultiKnapsackAssignBlock::print( std::ostream & output ,
  for( Index j = 0 ; j < f_N ; ++j )
   output << j << "\t" << v_P[ j ] << "\t" << v_W[ j ] << "\t" << v_K[ j ]
 	 << std::endl;
- }
+
+ }  // end( MultiKnapsackAssignBlock::print )
 
 /*--------------------------------------------------------------------------*/
 /*-------------------------- PRIVATE METHODS -------------------------------*/
@@ -321,7 +329,8 @@ void MultiKnapsackAssignBlock::guts_of_destructor( void )
  v_Sk.clear();
  v_pos.clear();
  AR = 0;
- }
+
+ }  // end( MultiKnapsackAssignBlock::guts_of_destructor )
 
 /*--------------------------------------------------------------------------*/
 
@@ -357,6 +366,7 @@ void MultiKnapsackAssignBlock::build( const std::string & prfx )
    bkb->load( items.size() + 1 , 0 , std::move( W ) , std::move( P ) );
    v_Block.push_back( bkb );
    }
+
  }  // end( MultiKnapsackAssignBlock::build )
 
 /*--------------------------------------------------------------------------*/

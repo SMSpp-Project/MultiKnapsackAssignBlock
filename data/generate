@@ -6,7 +6,7 @@
 #   Generator of instances of the Multiple Knapsack Assignment Problem in    #
 #   the txt format of MultiKnapsackAssignBlock::load( std::istream & ).      #
 #                                                                            #
-#   usage: generate <n> <r> <m> <corr> <seed> [ <range> ]                    #
+#   usage: generate <n> <r> <m> <corr> <seed> [ <range> [ <rho> ] ]          #
 #          <n>     = number of items                                         #
 #          <r>     = number of classes                                       #
 #          <m>     = number of knapsacks                                     #
@@ -14,29 +14,34 @@
 #                    (strongly correlated) profits and weights               #
 #          <seed>  = seed of the random generator                            #
 #          <range> = largest weight, default 1000                            #
+#          <rho>   = fraction of the total weight that the knapsacks hold,   #
+#                    default 0.5                                             #
 #                                                                            #
 #   The class of each item is drawn uniformly in [ 0 , r ), its weight w     #
 #   uniformly in [ 1 , range ], and its profit as in the classical classes   #
 #   of the 0-1 knapsack problem: uniformly in [ 1 , range ] (u), uniformly   #
 #   in [ w - range / 10 , w + range / 10 ] and at least 1 (w), or            #
-#   w + range / 10 (s). The capacity of each knapsack is drawn uniformly in  #
-#   [ 0.5 , 1.5 ] times the total weight over 2 m, so that the knapsacks     #
-#   hold about half of the total weight. The instance is written on the      #
-#   standard output.                                                         #
+#   w + range / 10 (s). The capacity of knapsack i is rho phi_i times the    #
+#   total weight, where the phi_i are drawn uniformly in [ 0 , 1 ] and       #
+#   normalized to sum 1, so that the knapsacks hold the fraction rho of the  #
+#   total weight. The instance is written on the standard output.            #
 #                                                                            #
 ##############################################################################
 
 import random
 import sys
 
-if len( sys.argv ) not in ( 6 , 7 ):
-    sys.exit( "usage: generate <n> <r> <m> <corr> <seed> [ <range> ]" )
+if len( sys.argv ) not in ( 6 , 7 , 8 ):
+    sys.exit( "usage: generate <n> <r> <m> <corr> <seed> "
+              "[ <range> [ <rho> ] ]" )
 
 n , r , m = ( int( a ) for a in sys.argv[ 1 : 4 ] )
 corr = sys.argv[ 4 ]
 rng = random.Random( int( sys.argv[ 5 ] ) )
-R = int( sys.argv[ 6 ] ) if len( sys.argv ) == 7 else 1000
-if corr not in ( "u" , "w" , "s" ) or min( n , r , m ) < 1 or R < 10:
+R = int( sys.argv[ 6 ] ) if len( sys.argv ) >= 7 else 1000
+rho = float( sys.argv[ 7 ] ) if len( sys.argv ) == 8 else 0.5
+if corr not in ( "u" , "w" , "s" ) or min( n , r , m ) < 1 or R < 10 or \
+   not ( 0 < rho <= 1 ):
     sys.exit( "generate: invalid arguments" )
 
 items = []
@@ -51,12 +56,13 @@ for j in range( n ):
     items.append( ( p , w , rng.randrange( r ) ) )
 
 total = sum( w for _ , w , _ in items )
-caps = [ max( 1 , round( rng.uniform( 0.5 , 1.5 ) * total / ( 2 * m ) ) )
-         for _ in range( m ) ]
+phi = [ rng.uniform( 0 , 1 ) for _ in range( m ) ]
+caps = [ max( 1 , round( rho * f / sum( phi ) * total ) ) for f in phi ]
 
 print( "# Multiple Knapsack Assignment instance: n = %d, r = %d, m = %d, "
-       "corr = %s, seed = %s, range = %d" % ( n , r , m , corr ,
-                                              sys.argv[ 5 ] , R ) )
+       "corr = %s, seed = %s, range = %d, rho = %g" % ( n , r , m , corr ,
+                                                        sys.argv[ 5 ] , R ,
+                                                        rho ) )
 print( n , r , m )
 print( " ".join( str( c ) for c in caps ) )
 for j , ( p , w , k ) in enumerate( items ):

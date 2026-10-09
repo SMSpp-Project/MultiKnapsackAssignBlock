@@ -5,7 +5,7 @@ Assignment Problem (MKAP), in which N items, partitioned into R classes, are
 to be placed in M knapsacks: each knapsack is given at most one class and
 only holds items of that class, within its capacity, each item goes in at
 most one knapsack, and the total profit of the items placed is maximized
-(see, e.g., K. Kataoka, T. Yamada, "Upper and lower bounding procedures for
+(see, e.g., S. Kataoka, T. Yamada, "Upper and lower bounding procedures for
 the multiple knapsack assignment problem", European Journal of Operational
 Research 237(2), 440-447, 2014).
 
@@ -140,15 +140,13 @@ conduct, and the process for submitting merge requests to us.
 
 ### Current Lead Authors
 
-- **Federica Di Pasquale**  
-  Dipartimento di Informatica  
-  Università di Pisa
-
 - **Antonio Frangioni**  
   Dipartimento di Informatica  
   Università di Pisa
 
-### Contributors
+- **Federica Di Pasquale**  
+  Dipartimento di Informatica  
+  Università di Pisa
 
 - **Donato Meoli**  
   Dipartimento di Informatica  

@@ -160,7 +160,7 @@ add_library(${modNamespace}::${modName} ALIAS ${modName})
 # holding the data of an older version downloads and extracts again instead
 # of taking them for the current ones. The archive is only downloaded by the
 # target extract_mkab_txt, which the tests that need it build.
-set(DATA_VERSION 2026-10-07)
+set(DATA_VERSION 2026-10-09)
 
 set(TXT_URL "https://gitlab.com/api/v4/projects/26260764/packages/generic/\
 txt/${DATA_VERSION}/txt.tgz")
