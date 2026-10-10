@@ -314,13 +314,9 @@ void MultiKnapsackAssignBlock::guts_of_destructor( void )
 {
  // the Function of the linking Constraint are emptied before the
  // sub-Block, whose Variable they use, are deleted
- for( auto & c : v_assign )
-  c.clear();
- for( auto & c : v_class )
-  c.clear();
+ Constraint::clear( v_assign );
+ Constraint::clear( v_class );
  reset_static_constraints();
- v_assign.clear();
- v_class.clear();
 
  for( auto b : v_Block )
   delete b;
