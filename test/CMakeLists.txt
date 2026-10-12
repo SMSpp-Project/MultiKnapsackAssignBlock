@@ -29,7 +29,7 @@ else ()
     endif ()
 endif ()
 
-# ----- MultiKnapsackAssignBlock_unit_test --------------------------------- #
+# ----- MultiKnapsackAssignBlock_unit_test ---------------------------------- #
 
 add_executable(${modName}_unit_test test.cpp)
 target_link_libraries(${modName}_unit_test PRIVATE ${modNamespace}::${modName})
