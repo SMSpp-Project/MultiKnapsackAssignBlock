@@ -36,6 +36,12 @@ MKABkINC = -I$(MKABkSDR)/include
 
 MKABkH   = $(MKABkSDR)/include/MultiKnapsackAssignBlock.h
 
+# the C++20 module smspp.multiknapsackassignblock - - - - - - - - - - - - - -
+# [see makefile-mod of SMS++]
+
+$(eval $(call SMSppMODrule,MKABk,$(MKABkSDR),MultiKnapsackAssignBlock,\
+	smspp.multiknapsackassignblock,$(BKBkMOD)))
+
 # clean - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 clean::
