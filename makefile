@@ -40,7 +40,7 @@ MKABkH   = $(MKABkSDR)/include/MultiKnapsackAssignBlock.h
 # [see makefile-mod of SMS++]
 
 $(eval $(call SMSppMODrule,MKABk,$(MKABkSDR),MultiKnapsackAssignBlock,\
-	smspp.multiknapsackassignblock,$(BKBkMOD)))
+	smspp.multiknapsackassignblock,BKBk))
 
 # clean - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
