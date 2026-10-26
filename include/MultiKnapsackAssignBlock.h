@@ -47,8 +47,8 @@ namespace SMSpp_di_unipi_it
 /*--------------------------------------------------------------------------*/
 /*-------------------------------- CLASSES ---------------------------------*/
 /*--------------------------------------------------------------------------*/
-/** @defgroup MultiKnapsackAssignBlock_CLASSES Classes in
- *  MultiKnapsackAssignBlock.h
+/** @defgroup MultiKnapsackAssignBlock_CLASSES Classes in \
+ *            MultiKnapsackAssignBlock.h
  *  @{ */
 
 /*--------------------------------------------------------------------------*/
