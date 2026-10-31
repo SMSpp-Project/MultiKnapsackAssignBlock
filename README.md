@@ -36,6 +36,10 @@ profit, the weight and the class of each item) or from memory (`load()`).
 These instructions will let you build the `MultiKnapsackAssignBlock` module on
 your system.
 
+The channels that distribute SMS++ are listed in its [installation
+guide](https://gitlab.com/smspp/smspp-project/-/wikis/Installing-SMS++); what
+follows is about building the module yourself.
+
 ### Requirements
 
 - The [SMS++ core library](https://gitlab.com/smspp/smspp) and its
