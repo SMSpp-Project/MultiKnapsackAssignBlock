@@ -1,5 +1,11 @@
 # MultiKnapsackAssignBlock
 
+[![Pipeline](https://gitlab.com/smspp/multiknapsackassignblock/badges/develop/pipeline.svg)](https://gitlab.com/smspp/multiknapsackassignblock/-/pipelines?ref=develop)
+[![Release](https://gitlab.com/smspp/multiknapsackassignblock/-/badges/release.svg)](https://gitlab.com/smspp/multiknapsackassignblock/-/releases)
+[![Documentation](https://img.shields.io/badge/docs-Doxygen-blue)](https://smspp.gitlab.io/smspp-project/)
+[![C++ Standard](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://en.cppreference.com/w/cpp/20)
+[![License: LGPL v3](https://img.shields.io/badge/License-LGPL_v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
+
 `MultiKnapsackAssignBlock` is a SMS++ `:Block` for the Multiple Knapsack
 Assignment Problem (MKAP), in which N items, partitioned into R classes, are
 to be placed in M knapsacks: each knapsack is given at most one class and
@@ -29,6 +35,10 @@ profit, the weight and the class of each item) or from memory (`load()`).
 
 These instructions will let you build the `MultiKnapsackAssignBlock` module on
 your system.
+
+The channels that distribute SMS++ are listed in its [installation
+guide](https://gitlab.com/smspp/smspp-project/-/wikis/Installing-SMS++); what
+follows is about building the module yourself.
 
 ### Requirements
 
