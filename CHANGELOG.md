@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-16
+
 
 ### Fixed
 
@@ -103,6 +105,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - the classes are written to netCDF as unsigned integers, and read from any
   integer or floating point type
 
-[Unreleased]: https://gitlab.com/smspp/multiknapsackassignblock/-/compare/0.2.0...develop
+[Unreleased]: https://gitlab.com/smspp/multiknapsackassignblock/-/compare/0.3.0...develop
+[0.3.0]: https://gitlab.com/smspp/multiknapsackassignblock/-/compare/0.2.0...0.3.0
 [0.2.0]: https://gitlab.com/smspp/multiknapsackassignblock/-/compare/0.1.0...0.2.0
 [0.1.0]: https://gitlab.com/smspp/multiknapsackassignblock/-/tags/0.1.0
