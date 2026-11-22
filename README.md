@@ -123,7 +123,10 @@ correlated. They are produced by `data/make-txt`, out of the generator
 `data/generate`, which draws the class of each item uniformly, its weight in
 [1, 1000] and its profit as in the classical classes of the 0-1 knapsack
 problem, and the capacity of each knapsack so that the knapsacks hold about
-half of the total weight.
+half of the total weight. With the option `-ky` the generator follows
+instead the scheme of the literature benchmark of Kataoka and Yamada (EJOR,
+2014), with classes of consecutive items, its correlated and binary profits
+and its capacities.
 
 
 ## Tests

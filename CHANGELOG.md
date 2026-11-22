@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- the option `-ky` of `data/generate`, which draws the instances by the
+  scheme of Kataoka and Yamada (EJOR, 2014), as described by Martello and
+  Monaci (Omega, 2020): classes of n / r consecutive items, their weakly and
+  strongly correlated and binary profits, and the capacities rounded down
+
 ### Changed
 
 - the library is kept in whoever links it by a source that calls its

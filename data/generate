@@ -6,12 +6,14 @@
 #   Generator of instances of the Multiple Knapsack Assignment Problem in    #
 #   the txt format of MultiKnapsackAssignBlock::load( std::istream & ).      #
 #                                                                            #
-#   usage: generate <n> <r> <m> <corr> <seed> [ <range> [ <rho> ] ]          #
+#   usage: generate [ -ky ] <n> <r> <m> <corr> <seed> [ <range> [ <rho> ] ]  #
+#          -ky     = the scheme of Kataoka and Yamada (see below)            #
 #          <n>     = number of items                                         #
 #          <r>     = number of classes                                       #
 #          <m>     = number of knapsacks                                     #
 #          <corr>  = u (uncorrelated), w (weakly correlated) or s            #
-#                    (strongly correlated) profits and weights               #
+#                    (strongly correlated) profits and weights, and with     #
+#                    -ky also b (binary profits)                             #
 #          <seed>  = seed of the random generator                            #
 #          <range> = largest weight, default 1000                            #
 #          <rho>   = fraction of the total weight that the knapsacks hold,   #
@@ -26,22 +28,39 @@
 #   normalized to sum 1, so that the knapsacks hold the fraction rho of the  #
 #   total weight. The instance is written on the standard output.            #
 #                                                                            #
+#   With -ky the instance follows the scheme of S. Kataoka, T. Yamada,       #
+#   "Upper and lower bounding procedures for the multiple knapsack           #
+#   assignment problem", EJOR 237(2), 2014, as described by S. Martello,     #
+#   M. Monaci, "Algorithmic approaches to the multiple knapsack assignment   #
+#   problem", Omega 90, 2020: r has to divide n, and class k holds the n / r #
+#   consecutive items from k n / r on; the profit is uniformly in            #
+#   [ 1 , range ] (u), floor( 0.6 w ) plus a uniform integer in              #
+#   [ 1 , floor( 0.4 range ) ] (w), w + floor( 0.2 range ) (s), or 1 or 100  #
+#   with equal probability (b); the capacity is rounded down, and may be 0.  #
+#   The random numbers are not those of the original generator, so the       #
+#   instances have the same distribution but are not the same.               #
+#                                                                            #
 ##############################################################################
 
 import random
 import sys
 
-if len( sys.argv ) not in ( 6 , 7 , 8 ):
-    sys.exit( "usage: generate <n> <r> <m> <corr> <seed> "
+args = sys.argv[ 1 : ]
+ky = len( args ) > 0 and args[ 0 ] == "-ky"
+if ky:
+    args = args[ 1 : ]
+if len( args ) not in ( 5 , 6 , 7 ):
+    sys.exit( "usage: generate [ -ky ] <n> <r> <m> <corr> <seed> "
               "[ <range> [ <rho> ] ]" )
 
-n , r , m = ( int( a ) for a in sys.argv[ 1 : 4 ] )
-corr = sys.argv[ 4 ]
-rng = random.Random( int( sys.argv[ 5 ] ) )
-R = int( sys.argv[ 6 ] ) if len( sys.argv ) >= 7 else 1000
-rho = float( sys.argv[ 7 ] ) if len( sys.argv ) == 8 else 0.5
-if corr not in ( "u" , "w" , "s" ) or min( n , r , m ) < 1 or R < 10 or \
-   not ( 0 < rho <= 1 ):
+n , r , m = ( int( a ) for a in args[ 0 : 3 ] )
+corr = args[ 3 ]
+rng = random.Random( int( args[ 4 ] ) )
+R = int( args[ 5 ] ) if len( args ) >= 6 else 1000
+rho = float( args[ 6 ] ) if len( args ) == 7 else 0.5
+if corr not in ( ( "u" , "w" , "s" , "b" ) if ky else ( "u" , "w" , "s" ) ) \
+   or min( n , r , m ) < 1 or R < 10 or not ( 0 < rho <= 1 ) or \
+   ( ky and n % r != 0 ):
     sys.exit( "generate: invalid arguments" )
 
 items = []
@@ -49,20 +68,28 @@ for j in range( n ):
     w = rng.randint( 1 , R )
     if corr == "u":
         p = rng.randint( 1 , R )
+    elif corr == "b":
+        p = rng.choice( ( 1 , 100 ) )
+    elif ky:
+        p = ( 6 * w ) // 10 + rng.randint( 1 , ( 4 * R ) // 10 ) \
+            if corr == "w" else w + ( 2 * R ) // 10
     elif corr == "w":
         p = max( 1 , rng.randint( w - R // 10 , w + R // 10 ) )
     else:
         p = w + R // 10
-    items.append( ( p , w , rng.randrange( r ) ) )
+    items.append( ( p , w , j // ( n // r ) if ky else rng.randrange( r ) ) )
 
 total = sum( w for _ , w , _ in items )
 phi = [ rng.uniform( 0 , 1 ) for _ in range( m ) ]
-caps = [ max( 1 , round( rho * f / sum( phi ) * total ) ) for f in phi ]
+if ky:
+    caps = [ int( rho * f / sum( phi ) * total ) for f in phi ]
+else:
+    caps = [ max( 1 , round( rho * f / sum( phi ) * total ) ) for f in phi ]
 
-print( "# Multiple Knapsack Assignment instance: n = %d, r = %d, m = %d, "
-       "corr = %s, seed = %s, range = %d, rho = %g" % ( n , r , m , corr ,
-                                                        sys.argv[ 5 ] , R ,
-                                                        rho ) )
+print( "# Multiple Knapsack Assignment instance%s: n = %d, r = %d, m = %d, "
+       "corr = %s, seed = %s, range = %d, rho = %g" % (
+           " (Kataoka-Yamada)" if ky else "" , n , r , m , corr , args[ 4 ] ,
+           R , rho ) )
 print( n , r , m )
 print( " ".join( str( c ) for c in caps ) )
 for j , ( p , w , k ) in enumerate( items ):
