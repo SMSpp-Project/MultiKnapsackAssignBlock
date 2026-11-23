@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- the surrogate formulation of Lalonde, Cote and Gendron (INFORMS Journal
+  on Computing, 2022), chosen by the `f_static_variables_Configuration` of
+  the BlockConfig (a `SimpleConfiguration<int>` with value 1): the profits
+  go on variables t_j, those of a last `BinaryKnapsackBlock` over all the
+  items with capacity the sum of these of the knapsacks, linked to the x by
+  the "select" constraints t_j <= sum_i x_ij, so that the Lagrangian dual is
+  stronger; `get_surrogate()` and `get_t()` give its sub-Block and its t
+
 - the option `-ky` of `data/generate`, which draws the instances by the
   scheme of Kataoka and Yamada (EJOR, 2014), as described by Martello and
   Monaci (Omega, 2020): classes of n / r consecutive items, their weakly and

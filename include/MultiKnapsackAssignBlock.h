@@ -88,7 +88,31 @@ namespace SMSpp_di_unipi_it
  * Thus, the MultiKnapsackAssignBlock itself only has the static Constraint
  * linking the sub-Block, i.e., the N "assignment" ones and the M "one class"
  * ones above, and no Variable and Objective of its own: the objective is the
- * sum of these of the sub-Block. */
+ * sum of these of the sub-Block.
+ *
+ * The BlockConfig can select instead the "surrogate" formulation of
+ * [Lalonde, Cote, Gendron, INFORMS J. on Computing 34(2), 2022], which has
+ * the same optimum and a stronger Lagrangian dual [see
+ * generate_abstract_variables()]: a binary variable \f$ t_j \f$ tells
+ * whether item j is in some knapsack, and the problem becomes
+ * \f[
+ *  \max \Bigl\{ \, \sum_{ j = 1 }^N P_j t_j \;:\;
+ *  t_j \leq \sum_{ i = 1 }^M x_{ij} \;\; j = 1 , \ldots , N \,,\;
+ *  \sum_{ j = 1 }^N W_j t_j \leq \sum_{ i = 1 }^M C_i \,,\;
+ *  \sum_{ i = 1 }^M x_{ij} \leq 1 \;\; j = 1 , \ldots , N \,,\;
+ *  \sum_{ k = 1 }^R y_{ik} \leq 1 \;\; i = 1 , \ldots , M \,,\;
+ *  ( x , y ) \in X \, \Bigr\}
+ * \f]
+ * (the surrogate knapsack constraint on the t being valid, since each item
+ * with \f$ t_j = 1 \f$ is in some knapsack). The profits of the items in
+ * the M * R sub-Block are then 0, and one more BinaryKnapsackBlock, the
+ * last sub-Block, has the N items with variables \f$ t_j \f$ (in
+ * increasing order of j), profits P, weights W and capacity
+ * \f$ \sum_i C_i \f$; the MultiKnapsackAssignBlock has the N "select"
+ * Constraint \f$ t_j \leq \sum_i x_{ij} \f$ as well. Relaxing all the
+ * static Constraint of the MultiKnapsackAssignBlock, the bound is not worse
+ * than these of both the original formulation and of the surrogate
+ * knapsack alone. */
 
 class MultiKnapsackAssignBlock : public Block
 {
@@ -200,9 +224,21 @@ class MultiKnapsackAssignBlock : public Block
  void deserialize( const netCDF::NcGroup & group ) override;
 
 /*--------------------------------------------------------------------------*/
- /// generates the Variable of the sub-Block
+ /// chooses the formulation, and generates the Variable of the sub-Block
  /** The MultiKnapsackAssignBlock has no Variable of its own: this generates
-  * these of the sub-Block, which the linking Constraint use. */
+  * these of the sub-Block, which the linking Constraint use. The formulation
+  * is chosen by the f_value wf of \p stvv, if it is a
+  * SimpleConfiguration< int >, else of the f_static_variables_Configuration
+  * of the BlockConfig, if it is one, else wf = 0:
+  *
+  * - wf == 0, the original formulation, with the M * R sub-Block;
+  *
+  * - wf == 1, the surrogate formulation [see the general notes], which sets
+  *   to 0 the profits of the items of the M * R sub-Block and adds the
+  *   surrogate BinaryKnapsackBlock as the last sub-Block.
+  *
+  * The formulation is chosen once: after the first call, the next ones do
+  * nothing. */
 
  void generate_abstract_variables( Configuration * stvv = nullptr ) override;
 
@@ -211,8 +247,9 @@ class MultiKnapsackAssignBlock : public Block
  /** Generates the N "assignment" Constraint and the M "one class"
   * Constraint, which link the sub-Block (whose Variable are generated
   * first, if they are not there yet), and then the Constraint of the
-  * sub-Block. The two groups are named "assign" and "class". No
-  * Modification is issued. */
+  * sub-Block. The two groups are named "assign" and "class"; the surrogate
+  * formulation also has the N Constraint \f$ t_j \leq \sum_i x_{ij} \f$,
+  * the group "select". No Modification is issued. */
 
  void generate_abstract_constraints( Configuration * stcc = nullptr )
   override;
@@ -315,6 +352,21 @@ class MultiKnapsackAssignBlock : public Block
 
  [[nodiscard]] BinaryKnapsackBlock * get_knapsack( Index i , Index k ) const;
 
+/*--------------------------------------------------------------------------*/
+ /// whether the formulation is the surrogate one [see the general notes]
+
+ [[nodiscard]] bool has_surrogate( void ) const { return( AR & HasSrg ); }
+
+/*--------------------------------------------------------------------------*/
+ /// the surrogate sub-Block, whose item j is \f$ t_j \f$
+ /** The surrogate BinaryKnapsackBlock, the last sub-Block, whose j-th item
+  * is \f$ t_j \f$; nullptr if the formulation is the original one. */
+
+ [[nodiscard]] BinaryKnapsackBlock * get_surrogate( void ) const {
+  return( ( AR & HasSrg ) ?
+	  static_cast< BinaryKnapsackBlock * >( v_Block.back() ) : nullptr );
+  }
+
 /**@} ----------------------------------------------------------------------*/
 /*-------------------------- Methods for R3 Blocks -------------------------*/
 /*--------------------------------------------------------------------------*/
@@ -325,8 +377,11 @@ class MultiKnapsackAssignBlock : public Block
  /** The only R3 Block is the copy, asked with \p r3bc == nullptr: a
   * MultiKnapsackAssignBlock with the same data, \p base if it is given
   * (which must be a MultiKnapsackAssignBlock) and a new one whose father is
-  * \p father otherwise, whose sub-Block are the copies of these of this one
-  * [see BinaryKnapsackBlock::get_R3_Block()]. */
+  * \p father otherwise, with the same formulation, whose sub-Block are the
+  * copies of these of this one [see BinaryKnapsackBlock::get_R3_Block()].
+  * If the BlockConfig asks for the surrogate formulation and this has not
+  * chosen it yet, this chooses it first [see
+  * generate_abstract_variables()]. */
 
  Block * get_R3_Block( Configuration * r3bc = nullptr ,
                        Block * base = nullptr ,
@@ -365,6 +420,13 @@ class MultiKnapsackAssignBlock : public Block
  /// the value of \f$ y_{ik} \f$, i.e., whether knapsack i is given class k
 
  [[nodiscard]] double get_y( Index i , Index k ) const;
+
+/*--------------------------------------------------------------------------*/
+ /// the value of \f$ t_j \f$, i.e., whether item j is in some knapsack
+ /** The value of \f$ t_j \f$ in the solution of the surrogate sub-Block;
+  * in the original formulation, \f$ \sum_i x_{ij} \f$. */
+
+ [[nodiscard]] double get_t( Index j ) const;
 
 /**@} ----------------------------------------------------------------------*/
 /*--- METHODS FOR LOADING, PRINTING & SAVING THE MultiKnapsackAssignBlock --*/
@@ -416,11 +478,17 @@ class MultiKnapsackAssignBlock : public Block
  static constexpr unsigned char HasCns = 2;
  ///< second bit of AR == 1 if the Constraint have been constructed
 
+ static constexpr unsigned char HasSrg = 4;
+ ///< third bit of AR == 1 if the formulation is the surrogate one
+
  /// the assignment Constraint: each item in at most one knapsack
  std::vector< FRowConstraint > v_assign;
 
  /// the class Constraint: each knapsack is given at most one class
  std::vector< FRowConstraint > v_class;
+
+ /// the select Constraint of the surrogate formulation: t_j <= sum_i x_ij
+ std::vector< FRowConstraint > v_select;
 
 /*--------------------------------------------------------------------------*/
 /*--------------------- PRIVATE PART OF THE CLASS --------------------------*/
@@ -440,6 +508,16 @@ class MultiKnapsackAssignBlock : public Block
  /// checks the data, then builds v_Sk, v_pos and the sub-Block
 
  void build( const std::string & prfx );
+
+/*--------------------------------------------------------------------------*/
+ /// the formulation that \p stvv, or else the BlockConfig, asks for
+
+ [[nodiscard]] int asked_formulation( Configuration * stvv ) const;
+
+/*--------------------------------------------------------------------------*/
+ /// turns the original formulation into the surrogate one, if it is not yet
+
+ void add_surrogate( void );
 
 /*--------------------------------------------------------------------------*/
 /*---------------------------- PRIVATE FIELDS ------------------------------*/

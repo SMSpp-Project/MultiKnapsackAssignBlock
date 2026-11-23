@@ -29,6 +29,8 @@
 
 #include "LinearFunction.h"
 
+#include <numeric>
+
 /*--------------------------------------------------------------------------*/
 /*------------------------- NAMESPACE AND USING ----------------------------*/
 /*--------------------------------------------------------------------------*/
@@ -168,7 +170,16 @@ void MultiKnapsackAssignBlock::generate_abstract_variables(
  if( AR & HasVar )  // the Variable are there already
   return;           // nothing to do
 
- Block::generate_abstract_variables( stvv );  // these of the sub-Block
+ switch( asked_formulation( stvv ) ) {
+  case( 0 ): break;                 // the original formulation
+  case( 1 ): add_surrogate(); break;  // the surrogate formulation
+  default:
+   throw( std::invalid_argument( "MultiKnapsackAssignBlock::"
+				 "generate_abstract_variables: invalid "
+				 "formulation" ) );
+  }
+
+ Block::generate_abstract_variables();  // these of the sub-Block
 
  AR |= HasVar;
 
@@ -217,6 +228,28 @@ void MultiKnapsackAssignBlock::generate_abstract_constraints(
  add_static_constraint( v_assign , "assign" );
  add_static_constraint( v_class , "class" );
 
+ // the select Constraint of the surrogate formulation: t_j <= sum_i x_{ij},
+ // i.e., t_j - sum_i x_{ij} <= 0, for each item j - - - - - - - - - - - - -
+
+ if( AR & HasSrg ) {
+  const auto srg = get_surrogate();
+  v_select.resize( f_N );
+  for( Index j = 0 ; j < f_N ; ++j ) {
+   LinearFunction::v_coeff_pair coeffs( f_M + 1 );
+   coeffs[ 0 ] = { srg->get_Var( j ) , 1 };
+   for( Index i = 0 ; i < f_M ; ++i )
+    coeffs[ i + 1 ] = { get_knapsack( i , v_K[ j ] )->get_Var( v_pos[ j ]
+							       + 1 ) , -1 };
+
+   v_select[ j ].set_lhs( - Inf< RowConstraint::RHSValue >() , eNoMod );
+   v_select[ j ].set_rhs( 0 , eNoMod );
+   v_select[ j ].set_function( new LinearFunction( std::move( coeffs ) ) ,
+			       eNoMod );
+   }
+
+  add_static_constraint( v_select , "select" );
+  }
+
  Block::generate_abstract_constraints( stcc );  // these of the sub-Block
 
  AR |= HasCns;
@@ -260,6 +293,23 @@ double MultiKnapsackAssignBlock::get_y( Index i , Index k ) const
  }
 
 /*--------------------------------------------------------------------------*/
+
+double MultiKnapsackAssignBlock::get_t( Index j ) const
+{
+ if( j >= f_N )
+  throw( std::invalid_argument(
+			  "MultiKnapsackAssignBlock::get_t: invalid item" ) );
+
+ if( AR & HasSrg )
+  return( get_surrogate()->get_x( j ) );
+
+ double t = 0;
+ for( Index i = 0 ; i < f_M ; ++i )
+  t += get_x( i , j );
+ return( t );
+ }
+
+/*--------------------------------------------------------------------------*/
 /*--- METHODS FOR LOADING, PRINTING & SAVING THE MultiKnapsackAssignBlock --*/
 /*--------------------------------------------------------------------------*/
 
@@ -283,6 +333,13 @@ Block * MultiKnapsackAssignBlock::get_R3_Block( Configuration * r3bc ,
  copy->load( f_N , f_R , f_M , std::vector< double >( v_C ) ,
 	     std::vector< double >( v_P ) , std::vector< double >( v_W ) ,
 	     Subset( v_K ) );
+
+ // the copy has the formulation of this, which is chosen now if the
+ // BlockConfig asks for the surrogate one
+ if( ( ! ( AR & HasVar ) ) && ( asked_formulation( nullptr ) == 1 ) )
+  add_surrogate();
+ if( AR & HasSrg )
+  copy->add_surrogate();
 
  // the sub-Block that load() has built are made copies of these of this,
  // with the items they have fixed, if any
@@ -380,6 +437,7 @@ void MultiKnapsackAssignBlock::guts_of_destructor( void )
  // sub-Block, whose Variable they use, are deleted
  Constraint::clear( v_assign );
  Constraint::clear( v_class );
+ Constraint::clear( v_select );
  reset_static_constraints();
 
  for( auto b : v_Block )
@@ -428,6 +486,43 @@ void MultiKnapsackAssignBlock::build( const std::string & prfx )
    }
 
  }  // end( MultiKnapsackAssignBlock::build )
+
+/*--------------------------------------------------------------------------*/
+
+int MultiKnapsackAssignBlock::asked_formulation( Configuration * stvv ) const
+{
+ if( ( ! stvv ) && f_BlockConfig )
+  stvv = f_BlockConfig->f_static_variables_Configuration;
+ if( auto sci = dynamic_cast< SimpleConfiguration< int > * >( stvv ) )
+  return( sci->f_value );
+ return( 0 );
+
+ }  // end( MultiKnapsackAssignBlock::asked_formulation )
+
+/*--------------------------------------------------------------------------*/
+
+void MultiKnapsackAssignBlock::add_surrogate( void )
+{
+ if( AR & HasSrg )  // the surrogate formulation is there already
+  return;           // nothing to do
+
+ // the profits go from the x_{ij} to the t_j
+ for( Index i = 0 ; i < f_M ; ++i )
+  for( Index k = 0 ; k < f_R ; ++k ) {
+   auto bkb = get_knapsack( i , k );
+   for( Index h = 0 ; h < v_Sk[ k ].size() ; ++h )
+    bkb->chg_profit( 0 , h + 1 );
+   }
+
+ // the surrogate knapsack: sum_j W_j t_j <= sum_i C_i
+ auto bkb = new BinaryKnapsackBlock( this );
+ bkb->load( f_N , std::accumulate( v_C.begin() , v_C.end() , double( 0 ) ) ,
+	    std::vector< double >( v_W ) , std::vector< double >( v_P ) );
+ v_Block.push_back( bkb );
+
+ AR |= HasSrg;
+
+ }  // end( MultiKnapsackAssignBlock::add_surrogate )
 
 /*--------------------------------------------------------------------------*/
 /*----------------- End File MultiKnapsackAssignBlock.cpp ------------------*/

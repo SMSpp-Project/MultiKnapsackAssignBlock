@@ -24,7 +24,9 @@ that link them, i.e., each item in at most one knapsack and each knapsack
 given at most one class. Hence, relaxing these constraints in a Lagrangian
 way leaves M * R independent 0-1 knapsack problems, which any `Solver` of
 `BinaryKnapsackBlock` can solve, while a `:MILPSolver` solves the whole
-problem out of its abstract representation.
+problem out of its abstract representation. The BlockConfig can select
+instead the surrogate formulation of Lalonde, Cote and Gendron (INFORMS
+Journal on Computing, 2022), whose Lagrangian dual gives a stronger bound.
 
 The data can be read from netCDF (`deserialize()`), from a text file (the
 numbers of items, classes and knapsacks, the capacities, then the index, the
