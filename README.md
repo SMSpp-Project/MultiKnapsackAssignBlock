@@ -99,7 +99,7 @@ out of the `extlib/makefile-default-paths-*` for your OS `*` and edit the
 relevant bits (commenting out all the rest).
 
 Check the [SMS++ installation
-wiki](https://gitlab.com/smspp/smspp-project/-/wikis/Customize-the-configuration#location-of-required-libraries)
+wiki](https://gitlab.com/smspp/smspp-project/-/wikis/Customize-the-configuration#location-of-external-libraries)
 for further details.
 
 
