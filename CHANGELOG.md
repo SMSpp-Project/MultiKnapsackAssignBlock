@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Monaci (Omega, 2020): classes of n / r consecutive items, their weakly and
   strongly correlated and binary profits, and the capacities rounded down
 
+- `get_R3_Block()` gives an identical copy of the MultiKnapsackAssignBlock,
+  whose sub-Block are the copies of its own, and `map_back_solution()` /
+  `map_forward_solution()` write the solution of one into the other
+
 ### Changed
 
 - the makefiles give the shared library of the module by default, a DLL on

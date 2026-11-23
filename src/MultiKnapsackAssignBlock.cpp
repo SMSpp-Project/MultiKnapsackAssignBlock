@@ -263,6 +263,70 @@ double MultiKnapsackAssignBlock::get_y( Index i , Index k ) const
 /*--- METHODS FOR LOADING, PRINTING & SAVING THE MultiKnapsackAssignBlock --*/
 /*--------------------------------------------------------------------------*/
 
+Block * MultiKnapsackAssignBlock::get_R3_Block( Configuration * r3bc ,
+						Block * base , Block * father )
+{
+ if( r3bc )
+  throw( std::invalid_argument( "MultiKnapsackAssignBlock::get_R3_Block: "
+				"only the copy is supported" ) );
+
+ MultiKnapsackAssignBlock * copy;
+ if( base ) {
+  copy = dynamic_cast< MultiKnapsackAssignBlock * >( base );
+  if( ! copy )
+   throw( std::invalid_argument( "MultiKnapsackAssignBlock::get_R3_Block: "
+				 "base is not a MultiKnapsackAssignBlock" ) );
+  }
+ else
+  copy = new MultiKnapsackAssignBlock( father );
+
+ copy->load( f_N , f_R , f_M , std::vector< double >( v_C ) ,
+	     std::vector< double >( v_P ) , std::vector< double >( v_W ) ,
+	     Subset( v_K ) );
+
+ // the sub-Block that load() has built are made copies of these of this,
+ // with the items they have fixed, if any
+ for( Index h = 0 ; h < v_Block.size() ; ++h )
+  v_Block[ h ]->get_R3_Block( nullptr , copy->v_Block[ h ] , copy );
+
+ return( copy );
+
+ }  // end( MultiKnapsackAssignBlock::get_R3_Block )
+
+/*--------------------------------------------------------------------------*/
+
+void MultiKnapsackAssignBlock::map_back_solution( Block * R3B ,
+						  Configuration * r3bc ,
+						  Configuration * solc )
+{
+ auto copy = dynamic_cast< MultiKnapsackAssignBlock * >( R3B );
+ if( ( ! copy ) || ( copy->v_Block.size() != v_Block.size() ) )
+  throw( std::invalid_argument( "MultiKnapsackAssignBlock::"
+				"map_back_solution: R3B is not a copy" ) );
+
+ for( Index h = 0 ; h < v_Block.size() ; ++h )
+  v_Block[ h ]->map_back_solution( copy->v_Block[ h ] );
+
+ }  // end( MultiKnapsackAssignBlock::map_back_solution )
+
+/*--------------------------------------------------------------------------*/
+
+void MultiKnapsackAssignBlock::map_forward_solution( Block * R3B ,
+						     Configuration * r3bc ,
+						     Configuration * solc )
+{
+ auto copy = dynamic_cast< MultiKnapsackAssignBlock * >( R3B );
+ if( ( ! copy ) || ( copy->v_Block.size() != v_Block.size() ) )
+  throw( std::invalid_argument( "MultiKnapsackAssignBlock::"
+				"map_forward_solution: R3B is not a copy" ) );
+
+ for( Index h = 0 ; h < v_Block.size() ; ++h )
+  v_Block[ h ]->map_forward_solution( copy->v_Block[ h ] );
+
+ }  // end( MultiKnapsackAssignBlock::map_forward_solution )
+
+/*--------------------------------------------------------------------------*/
+
 void MultiKnapsackAssignBlock::serialize( netCDF::NcGroup & group ) const
 {
  Block::serialize( group );

@@ -316,6 +316,39 @@ class MultiKnapsackAssignBlock : public Block
  [[nodiscard]] BinaryKnapsackBlock * get_knapsack( Index i , Index k ) const;
 
 /**@} ----------------------------------------------------------------------*/
+/*-------------------------- Methods for R3 Blocks -------------------------*/
+/*--------------------------------------------------------------------------*/
+/** @name Methods for R3 Blocks
+ *  @{ */
+
+ /// gives an identical copy of the MultiKnapsackAssignBlock
+ /** The only R3 Block is the copy, asked with \p r3bc == nullptr: a
+  * MultiKnapsackAssignBlock with the same data, \p base if it is given
+  * (which must be a MultiKnapsackAssignBlock) and a new one whose father is
+  * \p father otherwise, whose sub-Block are the copies of these of this one
+  * [see BinaryKnapsackBlock::get_R3_Block()]. */
+
+ Block * get_R3_Block( Configuration * r3bc = nullptr ,
+                       Block * base = nullptr ,
+                       Block * father = nullptr ) override;
+
+/*--------------------------------------------------------------------------*/
+ /// writes the solution of a copy into the Variable of this one
+ /** \p R3B must be a copy given by get_R3_Block(): the solution of each of
+  * its sub-Block is written into the corresponding one of this [see
+  * BinaryKnapsackBlock::map_back_solution()]. */
+
+ void map_back_solution( Block * R3B , Configuration * r3bc = nullptr ,
+                         Configuration * solc = nullptr ) override;
+
+/*--------------------------------------------------------------------------*/
+ /// writes the solution of this into the Variable of a copy
+ /** The reverse of map_back_solution(). */
+
+ void map_forward_solution( Block * R3B , Configuration * r3bc = nullptr ,
+                            Configuration * solc = nullptr ) override;
+
+/**@} ----------------------------------------------------------------------*/
 /*----------------------- Methods for handling Solution --------------------*/
 /*--------------------------------------------------------------------------*/
 /** @name Methods for handling Solution
