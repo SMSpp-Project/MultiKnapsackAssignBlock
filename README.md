@@ -163,11 +163,11 @@ conduct, and the process for submitting merge requests to us.
 
 ### Current Lead Authors
 
-- **Antonio Frangioni**  
+- **Federica Di Pasquale**  
   Dipartimento di Informatica  
   Università di Pisa
 
-- **Federica Di Pasquale**  
+- **Antonio Frangioni**  
   Dipartimento di Informatica  
   Università di Pisa
 
