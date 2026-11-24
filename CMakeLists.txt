@@ -189,10 +189,10 @@ endif ()
 # tree holding the data of an older version (a cache of the CI, or a clone
 # that has been extracted before) downloads and extracts again instead of
 # taking them for the current ones.
-set(DATA_VERSION 2026-10-09)
+set(DATA_VERSION 2026-11-24)
 set(DATA_PROJECT 26260764)
 set(DATA_PREFIX mkab)
-set(DATA_FORMATS txt)
+set(DATA_FORMATS txt inp)
 
 foreach (fmt ${DATA_FORMATS})
     set(url "https://gitlab.com/api/v4/projects/${DATA_PROJECT}/packages/\

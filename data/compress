@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 
 tar -czf txt.tgz txt
+tar -czf inp.tgz inp

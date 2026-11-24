@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- the 4020 instances of Martello and Monaci, in the seven sets of their
+  paper, are the format `inp` of the data in the GitLab Package Registry,
+  which CMake downloads into `data/inp` when a test needs them
+
 - the option `-ky` of `data/generate`, which draws the instances by the
   scheme of Kataoka and Yamada (EJOR, 2014), as described by Martello and
   Monaci (Omega, 2020): classes of n / r consecutive items, their weakly and

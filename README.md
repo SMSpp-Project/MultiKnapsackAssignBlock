@@ -112,8 +112,10 @@ using CMake you need to do it by hand, via
 
 ```sh
 cd data
-wget https://gitlab.com/api/v4/projects/26260764/packages/generic/txt/2026-10-07/txt.tgz
+wget https://gitlab.com/api/v4/projects/26260764/packages/generic/txt/2026-11-24/txt.tgz
+wget https://gitlab.com/api/v4/projects/26260764/packages/generic/inp/2026-11-24/inp.tgz
 tar xzvf txt.tgz
+tar xzvf inp.tgz
 ```
 
 This builds the folder `data/txt`, with 12 instances in the text format
@@ -127,6 +129,14 @@ half of the total weight. With the option `-ky` the generator follows
 instead the scheme of the literature benchmark of Kataoka and Yamada (EJOR,
 2014), with classes of consecutive items, its correlated and binary profits
 and its capacities.
+
+The folder `data/inp` holds, in the same format, the 4020 instances of
+Martello and Monaci ("Algorithmic approaches to the multiple knapsack
+assignment problem", Omega, 2020), in the seven sets of their tables:
+`SET1` the small instances of the literature, `SET7` the new small ones,
+`SET2` those of increasing n, `SET3` and `SET6` the large uncorrelated and
+binary ones of different rho, `SET4` and `SET5` the large ones of different
+families, the latter with different values of R.
 
 
 ## Tests
